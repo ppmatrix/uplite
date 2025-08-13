@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  uplite:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - SECRET_KEY=dev-secret-key
+      - SQLALCHEMY_DATABASE_URI=sqlite:///app/uplite.db
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    restart: unless-stopped

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to UpLite{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <div class="hero-section py-5">
+                <i class="bi bi-speedometer2 display-1 text-primary mb-4"></i>
+                <h1 class="display-4 mb-4">Welcome to UpLite</h1>
+                <p class="lead mb-4">
+                    A lightweight, configurable web dashboard and connection watcher. 
+                    Monitor your services, track system resources, and keep everything in view with our modular widget system.
+                </p>
+                
+                {% if not current_user.is_authenticated %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-md-2">
+                        <i class="bi bi-box-arrow-in-right"></i> Login
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-person-plus"></i> Register
+                    </a>
+                </div>
+                {% else %}
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-grid"></i> Go to Dashboard
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-wifi display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Connection Monitoring</h5>
+                    <p class="card-text">
+                        Monitor HTTP endpoints, ping hosts, check TCP connections, 
+                        and track database connectivity in real-time.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-puzzle display-4 text-info mb-3"></i>
+                    <h5 class="card-title">Modular Widgets</h5>
+                    <p class="card-text">
+                        Customize your dashboard with widgets for system status, 
+                        logs, services, and more. Arrange and configure to your needs.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-speedometer2 display-4 text-warning mb-3"></i>
+                    <h5 class="card-title">Lightweight & Fast</h5>
+                    <p class="card-text">
+                        Built with Flask for speed and simplicity. 
+                        Easy to deploy with Docker, minimal resource usage.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

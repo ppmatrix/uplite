@@ -1,0 +1,691 @@
+<!-- Dashboard Template - Updated: 2025-08-13 23:05 -->
+{% extends "base.html" %}
+
+{% block title %}Dashboard - UpLite{% endblock %}
+
+{% block head %}
+<style>
+.widget-container {
+    margin-bottom: 20px;
+}
+
+.widget {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.widget-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    padding: 15px 20px;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.widget-body {
+    padding: 20px;
+}
+
+.connection-summary {
+    margin-bottom: 25px;
+}
+
+.connection-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 18px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    min-height: 50px;
+}
+
+.connection-item:hover {
+    background: #f0f8ff;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,123,255,0.15);
+    text-decoration: none;
+    color: inherit;
+}
+
+.connection-item.status-up:hover {
+    background: #f8fff8;
+    border-color: #28a745;
+    box-shadow: 0 3px 6px rgba(40,167,69,0.15);
+}
+
+.connection-item.status-down:hover {
+    background: #fff8f8;
+    border-color: #dc3545;
+    box-shadow: 0 3px 6px rgba(220,53,69,0.15);
+}
+
+.non-clickable {
+    cursor: default !important;
+}
+
+.non-clickable:hover {
+    transform: none !important;
+    background: #fafafa !important;
+    border-color: #e9ecef !important;
+    box-shadow: none !important;
+}
+
+/* Status LED */
+.status-led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.status-led.status-up {
+    background-color: #28a745;
+    box-shadow: 0 0 8px rgba(40,167,69,0.4);
+}
+
+.status-led.status-down {
+    background-color: #dc3545;
+    box-shadow: 0 0 8px rgba(220,53,69,0.4);
+}
+
+.status-led.status-unknown {
+    background-color: #6c757d;
+    box-shadow: 0 0 8px rgba(108,117,125,0.4);
+}
+
+.status-led.status-up::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: #34d058;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+/* Connection Info */
+.connection-info {
+    grid-area: info;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.connection-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    line-height: 1.2;
+}
+
+.connection-description {
+    color: #6c757d;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    line-height: 1.1;
+    margin-top: -2px;
+}
+
+/* Color-coded response time badges */
+.response-time-display {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    padding: 0.25em 0.5em;
+    border-radius: 0.375rem;
+    line-height: 1;
+    min-width: 45px;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.connection-info {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    overflow: hidden;
+}
+
+.connection-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.connection-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 150px;
+}
+
+/* Ping Visualization Bar */
+.ping-bar-container {
+    width: 200px;
+    height: 28px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    padding: 2px;
+    margin-left: 15px;
+    flex-shrink: 0;
+    position: relative;
+    overflow: visible;
+}
+
+.ping-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, 
+        #00ff00 0%,   /* Bright green start */
+        #00ff00 20%,  /* Green */
+        #33ff33 40%,  /* Light green */
+        #66ff66 60%,  /* Lighter green */
+        #99ff99 80%,  /* Even lighter */
+        #ccffcc 100%  /* Very light green end */
+    );
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Scrolling line chart */
+.ping-chart-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.ping-chart {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-line {
+    fill: none;
+    stroke: #00ff00;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.chart-dots {
+    fill: #00ff00;
+    stroke: #ffffff;
+    stroke-width: 1;
+}
+
+.chart-area {
+    fill: url(#chartGradient);
+    opacity: 0.3;
+}
+
+.chart-grid {
+    stroke: #333;
+    stroke-width: 0.5;
+    opacity: 0.5;
+}
+
+/* Status-based colors */
+.ping-bar.status-up .chart-line { stroke: #00ff00; }
+.ping-bar.status-up .chart-dots { fill: #00ff00; }
+.ping-bar.status-down .chart-line { stroke: #ff4444; }
+.ping-bar.status-down .chart-dots { fill: #ff4444; }
+.ping-bar.status-unknown .chart-line { stroke: #888; }
+.ping-bar.status-unknown .chart-dots { fill: #888; }
+
+@keyframes pingActivity {
+    0%, 80%, 100% { 
+        opacity: 0.3; 
+        transform: scaleY(0.4);
+    }
+    40% { 
+        opacity: 1; 
+        transform: scaleY(1);
+    }
+}
+
+.ping-bar.status-down .ping-segment {
+    background: #dc3545;
+    opacity: 0.2;
+    animation: none;
+}
+
+.ping-bar.status-unknown .ping-segment {
+    background: #6c757d;
+    opacity: 0.3;
+    animation: none;
+}
+
+/* Response time display */
+.response-time-display {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    font-size: 0.8rem;
+    color: #ffffff;
+    font-weight: 700;
+    background: #007bff;
+    border: 1px solid #ffffff;
+    padding: 2px 5px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.clean-dashboard-title {
+    color: #495057;
+    font-weight: 300;
+    margin-bottom: 30px;
+}
+
+.refresh-btn {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.external-link-icon {
+    margin-left: 10px;
+    color: #007bff;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.connection-item:hover .external-link-icon {
+    opacity: 1;
+}
+
+.non-clickable .external-link-icon {
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="clean-dashboard-title"><i class="bi bi-activity"></i> Connection Monitoring</h1>
+    <button id="refresh-dashboard" class="btn btn-outline-primary refresh-btn">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+</div>
+
+<div class="row" id="dashboard-widgets">
+    {% for widget_config in widget_configs %}
+    <div class="col-12 widget-container">
+        <div class="widget widget-{{ widget_config.widget_type }}">
+            
+            <div class="widget-body" id="widget-{{ widget_config.id }}-body">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Loading connection status...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            <strong>Clean Dashboard Setup</strong><br>
+            Your dashboard is now focused on connection monitoring. 
+            <a href="{{ url_for('dashboard.connections') }}">Manage connections</a> to customize what you monitor.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load widget data
+    loadAllWidgets();
+    
+    // Set up refresh button
+    document.getElementById('refresh-dashboard').addEventListener('click', function() {
+        const button = this;
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
+        button.disabled = true;
+        
+        loadAllWidgets().finally(() => {
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+        });
+    });
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadAllWidgets, 30000);
+});
+
+function loadAllWidgets() {
+    const widgets = document.querySelectorAll('[id^="widget-"][id$="-body"]');
+    const promises = [];
+    
+    widgets.forEach(widget => {
+        const widgetId = widget.id.match(/widget-(\d+)-body/)[1];
+        promises.push(loadWidgetData());
+    });
+    
+    return Promise.all(promises);
+}
+
+function loadWidgetData() {
+    const widgetBody = document.querySelector("[id$='-body']");
+    
+    return fetch(`/api/dashboard/refresh`)
+        .then(response => {
+            console.log("API response status:", response.status);
+            if (response.status === 401 || response.status === 403) {
+                throw new Error("Authentication required - please refresh the page and login");
+            }
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+            } else {
+                renderConnectionMonitor(data);
+            }
+        })
+        .catch(error => {
+            console.error("❌ Error loading connection data:", error);
+            widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load connection data: ${error.message}</div>`;
+            console.error('Widget load error:', error);
+        });
+}
+
+function isClickableUrl(url) {
+    if (!url) return false;
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        return true;
+    }
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(url)) {
+        return false;
+    }
+    return false;
+}
+
+function makeConnectionClickable(element, url, connectionName) {
+    if (!isClickableUrl(url)) {
+        element.classList.add('non-clickable');
+        return;
+    }
+    
+    element.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.open(url, '_blank', 'noopener,noreferrer');
+    });
+}
+
+function renderConnectionMonitor(data) {
+    console.log("📊 renderConnectionMonitor called with:", data);
+    
+    const widgetBody = document.querySelector('[id^="widget-"][id$="-body"]');
+    
+    if (!widgetBody) {
+        console.error("❌ Widget body element not found!");
+        return;
+    }
+    
+    if (!data) {
+        console.error("❌ No data provided to renderConnectionMonitor");
+        widgetBody.innerHTML = '<div class="alert alert-danger">No data received from API</div>';
+        return;
+    }
+    
+    if (!data.connections || data.connections.length === 0) {
+        console.log("⚠️ No connections in data");
+        widgetBody.innerHTML = '<div class="alert alert-warning">No connection data available</div>';
+        return;
+    }
+    
+    console.log(`✅ Processing ${data.connections.length} connections`);
+    
+    // Generate summary section from connection data
+    const upCount = data.connections.filter(conn => conn.last_status === 'up').length;
+    const downCount = data.connections.filter(conn => conn.last_status === 'down').length;
+    const totalCount = data.connections.length;
+    
+    const overallStatus = downCount === 0 ? 'success' : (upCount === 0 ? 'danger' : 'warning');
+    const overallMessage = downCount === 0 ? 'All services operational' : 
+                          upCount === 0 ? 'All services down' : 
+                          `${downCount} service${downCount > 1 ? 's' : ''} experiencing issues`;
+    
+    const summaryHtml = `
+        <div class="connection-summary">
+            <div class="alert alert-${overallStatus} d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><i class="bi bi-hdd-network"></i> ${overallMessage}</strong>
+                    <div class="mt-2">
+                        <small>
+                            <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
+                            <span class="badge bg-success me-2">Up: ${upCount}</span>
+                            ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
+                            ${data.connections.filter(conn => conn.last_status === 'unknown').length > 0 ? `<span class="badge bg-warning me-2">Unknown: ${data.connections.filter(conn => conn.last_status === 'unknown').length}</span>` : ''}
+                        </small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> 
+                        Updated ${new Date().toLocaleTimeString()}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Generate connections list
+    let connectionsHtml = '<div class="connections-list">';
+    
+    // Debug: Log full API response
+    console.log("Full API response:", data);
+    console.log("Connections array:", data.connections);
+    console.log("Number of connections:", data.connections ? data.connections.length : 0);
+    
+    if (!data.connections || data.connections.length === 0) {
+        console.error("❌ No connections in API response!");
+        widgetBody.innerHTML = '<div class="alert alert-warning">No connections found in API response</div>';
+        return;
+    }
+    
+    
+    
+    // Generate sample historical data for demonstration
+    function generateSampleHistory(conn) {
+        const baseTime = conn.median_response_time || conn.last_response_time || 100;
+        const variance = baseTime * 0.3; // 30% variance
+        const history = [];
+        
+        for (let i = 0; i < 20; i++) {
+            const time = baseTime + (Math.random() - 0.5) * variance;
+            const status = Math.random() > 0.1 ? 'up' : 'down'; // 90% uptime
+            history.push({
+                timestamp: Date.now() - (20 - i) * 60000, // 1 minute intervals
+                last_response_time: Math.max(1, time),
+                status: status
+            });
+        }
+        return history;
+    }
+    
+    // Create SVG line chart
+    function createSVGChart(history, currentStatus) {
+        const width = 190;
+        const height = 20;
+        const padding = 2;
+        
+        const validData = history.filter(h => h.last_response_time && h.status === 'up');
+        if (validData.length < 2) {
+            return `<div class="no-chart-data">No data</div>`;
+        }
+        
+        // Calculate scales
+        const minTime = Math.min(...validData.map(h => h.last_response_time));
+        const maxTime = Math.max(...validData.map(h => h.last_response_time));
+        const timeRange = maxTime - minTime || 1;
+        
+        // Generate path points
+        const points = validData.map((h, i) => {
+            const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+            const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+            return `${x},${y}`;
+        }).join(' ');
+        
+        // Generate area path (for gradient fill)
+        const areaPoints = validData.map((h, i) => {
+            const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+            const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+            return `${x},${y}`;
+        });
+        const areaPath = `M${areaPoints[0]} L${areaPoints.join(' L')} L${areaPoints[areaPoints.length-1].split(',')[0]},${height-padding} L${areaPoints[0].split(',')[0]},${height-padding} Z`;
+        
+        return `
+            <svg class="ping-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="chartGradient-${Date.now()}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:currentColor;stop-opacity:0.8"/>
+                        <stop offset="100%" style="stop-color:currentColor;stop-opacity:0"/>
+                    </linearGradient>
+                </defs>
+                
+                <!-- Grid lines -->
+                <line class="chart-grid" x1="0" y1="${height/2}" x2="${width}" y2="${height/2}"/>
+                
+                <!-- Area fill -->
+                <path class="chart-area" d="${areaPath}"/>
+                
+                <!-- Line -->
+                <polyline class="chart-line" points="${points}"/>
+                
+                <!-- Dots for data points -->
+                ${validData.map((h, i) => {
+                    const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+                    const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+                    return `<circle class="chart-dots" cx="${x}" cy="${y}" r="1.5"/>`;
+                }).join('')}
+            </svg>
+        `;
+    }
+
+    
+    data.connections.forEach((conn, index) => {
+        console.log(`Processing connection ${index + 1}:`, {
+            name: conn.name,
+            last_status: conn.last_status,
+            last_response_time: conn.last_response_time,
+            target: conn.target
+        });
+        const isClickable = isClickableUrl(conn.target);
+        const statusClass = conn.last_status === 'up' ? 'status-up' : conn.last_status === 'down' ? 'status-down' : 'status-unknown';
+        const ledClass = `status-${conn.last_status}`;
+        
+        // Generate historical chart data
+        const generateChart = (conn) => {
+            // This will be populated with real historical data
+            const sampleData = conn.history || generateSampleHistory(conn);
+            return createSVGChart(sampleData, conn.last_status);
+        };
+        
+        connectionsHtml += `
+            <div class="connection-item ${statusClass}" data-url="${conn.target}" data-name="${conn.name}">
+                <div class="status-led ${ledClass}"></div>
+                <div class="connection-info">
+                    <div class="connection-name">${conn.name}</div>
+                    <div class="connection-description">${conn.description || conn.target}</div>
+                </div>
+                <div class="ping-bar-container">
+                    <div class="ping-bar ${statusClass}">
+                        <div class="ping-chart-container">${generateChart(conn)}</div>
+                        ${(() => {
+                    const responseTime = conn.median_response_time || conn.last_response_time;
+                    if (!responseTime) {
+                        return '<div class="response-time-display badge bg-danger">ERR</div>';
+                    }
+                    
+                    let colorClass = 'badge bg-danger';
+                    if (responseTime < 100) {
+                        colorClass = 'badge bg-success';
+                    } else if (responseTime < 300) {
+                        colorClass = 'badge bg-warning text-dark';
+                    } else if (responseTime < 1000) {
+                        colorClass = 'badge bg-warning';
+                    }
+                    
+                    const title = conn.median_response_time ? 'Median response time' : 'Current response time';
+                    return `<div class="response-time-display ${colorClass}" title="${title}">${Math.round(responseTime)}ms</div>`;
+                })()}
+                    </div>
+                </div>
+                ${isClickable ? '<i class="bi bi-box-arrow-up-right external-link-icon"></i>' : ''}
+            </div>
+        `;
+    });
+    connectionsHtml += '</div>';
+    
+    widgetBody.innerHTML = summaryHtml + connectionsHtml;
+    
+    // Add click handlers to clickable connections
+    const connectionItems = widgetBody.querySelectorAll('.connection-item');
+    connectionItems.forEach(item => {
+        const url = item.dataset.url;
+        const name = item.dataset.name;
+        makeConnectionClickable(item, url, name);
+    });
+}
+</script>
+
+<style>
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

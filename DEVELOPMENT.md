@@ -177,3 +177,60 @@ python manage.py create-admin
 python start_app.py &
 python monitor_service.py &
 ```
+
+## GitHub Integration
+
+### Setting up GitHub Remote
+
+1. **Create GitHub Repository** (on github.com):
+   - Go to https://github.com/ppmatrix
+   - Click "New Repository"
+   - Repository name: `uplite`
+   - Description: "UpLite - Connection Monitoring Dashboard"
+   - Make it Public or Private as preferred
+   - **Do NOT** initialize with README, .gitignore, or license (we have these already)
+
+2. **Add Remote and Push**:
+   ```bash
+   # Add GitHub as remote origin
+   git remote add origin https://github.com/ppmatrix/uplite.git
+   
+   # Push main branch
+   git push -u origin main
+   
+   # Push develop branch  
+   git push -u origin develop
+   ```
+
+3. **Alternative SSH Setup** (if you have SSH keys configured):
+   ```bash
+   git remote add origin git@github.com:ppmatrix/uplite.git
+   git push -u origin main
+   git push -u origin develop
+   ```
+
+### GitHub Features to Enable
+
+- **Issues** - For bug tracking and feature requests
+- **Projects** - For kanban-style project management  
+- **Actions** - For CI/CD (see `.github/workflows/` if added)
+- **Security** - Dependabot for dependency updates
+- **Pages** - For documentation hosting
+
+### Collaboration Workflow
+
+1. **Fork and Clone** (for contributors):
+   ```bash
+   # Fork the repository on GitHub, then:
+   git clone https://github.com/your-username/uplite.git
+   git remote add upstream https://github.com/ppmatrix/uplite.git
+   ```
+
+2. **Create Pull Request**:
+   ```bash
+   git checkout develop
+   git checkout -b feature/my-feature
+   # Make changes...
+   git push origin feature/my-feature
+   # Create PR on GitHub from feature branch to develop
+   ```

@@ -1,3 +1,52 @@
+# UpLite - Connection Monitoring Dashboard
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+
+> A lightweight, configurable web dashboard for monitoring HTTP endpoints, ping connectivity, and service health with real-time status updates and historical charts.
+
+## ✨ Features
+
+- 🔍 **Real-time Monitoring** - HTTP/HTTPS endpoints and ping connectivity
+- 📊 **Visual Dashboard** - Status LEDs, response time charts, and statistics
+- 🔐 **User Authentication** - Secure login with user management
+- 📱 **Responsive Design** - Works on desktop, tablet, and mobile
+- 🐳 **Docker Ready** - Easy deployment with Docker Compose
+- 🎨 **Clean Interface** - Bootstrap-based modern UI
+- 📈 **Historical Data** - Track connection performance over time
+- ⚡ **Fast Setup** - Get running in minutes
+
+## 🚀 Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/ppmatrix/uplite.git
+cd uplite
+
+# Setup environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Install dependencies
+uv sync
+
+# Initialize database  
+python manage.py init-db
+python manage.py create-admin
+
+# Start application
+python start_app.py &
+python monitor_service.py &
+```
+
+Visit `http://localhost:5002` and login with your admin credentials.
+
+## 📸 Screenshots
+
+*[Add screenshots here after uploading to GitHub]*
+
 # UpLite
 
 A lightweight, configurable web dashboard and connection watcher built with Flask and SQLAlchemy. UpLite provides a modular widget system for monitoring services, system resources, and connections with a clean, responsive UI.

@@ -244,3 +244,42 @@ If you encounter any issues or have questions:
 - [ ] Mobile app companion
 - [ ] Grafana integration
 - [ ] Custom dashboards and themes
+
+## Git Repository
+
+This project is now under Git version control with the following structure:
+
+- **main branch**: Production-ready code
+- **develop branch**: Development integration 
+- **Feature branches**: `feature/*` for new features
+- **Bug fix branches**: `bugfix/*` for fixes
+
+### Quick Start
+
+```bash
+# Setup environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Install dependencies  
+uv sync
+
+# Initialize database
+python manage.py init-db
+python manage.py create-admin
+
+# Start application
+python start_app.py &
+python monitor_service.py &
+```
+
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed development workflow.
+
+## Project Status
+
+✅ **Fully functional** - Dashboard displays connections with real-time monitoring
+✅ **Clean codebase** - All temporary files and development artifacts removed  
+✅ **Version controlled** - Git repository initialized with proper .gitignore
+✅ **Production ready** - Docker configuration and deployment guides included
+
+Last updated: 2025-08-13

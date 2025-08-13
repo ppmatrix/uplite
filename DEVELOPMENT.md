@@ -178,6 +178,7 @@ python start_app.py &
 python monitor_service.py &
 ```
 
+
 ## GitHub Integration
 
 ### Setting up GitHub Remote
@@ -190,10 +191,10 @@ python monitor_service.py &
    - Make it Public or Private as preferred
    - **Do NOT** initialize with README, .gitignore, or license (we have these already)
 
-2. **Add Remote and Push**:
+2. **Add Remote and Push** (SSH - Recommended):
    ```bash
-   # Add GitHub as remote origin
-   git remote add origin https://github.com/ppmatrix/uplite.git
+   # Add GitHub as remote origin (SSH)
+   git remote add origin git@github.com:ppmatrix/uplite.git
    
    # Push main branch
    git push -u origin main
@@ -202,12 +203,35 @@ python monitor_service.py &
    git push -u origin develop
    ```
 
-3. **Alternative SSH Setup** (if you have SSH keys configured):
+3. **Alternative HTTPS Setup** (if SSH keys not configured):
    ```bash
-   git remote add origin git@github.com:ppmatrix/uplite.git
+   git remote add origin https://github.com/ppmatrix/uplite.git
    git push -u origin main
    git push -u origin develop
    ```
+
+### SSH Key Setup (if needed)
+
+If you get permission denied errors, you need to set up SSH keys:
+
+```bash
+# Generate SSH key (if you don't have one)
+ssh-keygen -t ed25519 -C "ppmatrixcsk@gmail.com"
+
+# Start SSH agent
+eval "$(ssh-agent -s)"
+
+# Add key to agent
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key to clipboard
+cat ~/.ssh/id_ed25519.pub
+```
+
+Then add the public key to GitHub:
+1. Go to GitHub → Settings → SSH and GPG keys
+2. Click "New SSH key"  
+3. Paste your public key and save
 
 ### GitHub Features to Enable
 
@@ -222,8 +246,8 @@ python monitor_service.py &
 1. **Fork and Clone** (for contributors):
    ```bash
    # Fork the repository on GitHub, then:
-   git clone https://github.com/your-username/uplite.git
-   git remote add upstream https://github.com/ppmatrix/uplite.git
+   git clone git@github.com:your-username/uplite.git
+   git remote add upstream git@github.com:ppmatrix/uplite.git
    ```
 
 2. **Create Pull Request**:

@@ -237,29 +237,49 @@
 
 /* Scrolling line chart */
 .ping-chart-container {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 20px;
-    max-width: 100px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
 }
 
-.no-chart-data {
-    color: #6c757d;
-    font-size: 0.8rem;
-    text-align: center;
+.ping-chart {
     width: 100%;
+    height: 100%;
 }
 
 .chart-line {
     fill: none;
-    stroke: #28a745;
-    stroke-width: 1;
-    vector-rendering: crispEdges;
+    stroke: #00ff00;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-/* Simple chart styling */
+.chart-dots {
+    fill: #00ff00;
+    stroke: #ffffff;
+    stroke-width: 1;
+}
 
+.chart-area {
+    fill: url(#chartGradient);
+    opacity: 0.3;
+}
+
+.chart-grid {
+    stroke: #333;
+    stroke-width: 0.5;
+    opacity: 0.5;
+}
+
+/* Status-based colors */
+.ping-bar.status-up .chart-line { stroke: #00ff00; }
+.ping-bar.status-up .chart-dots { fill: #00ff00; }
+.ping-bar.status-down .chart-line { stroke: #ff4444; }
+.ping-bar.status-down .chart-dots { fill: #ff4444; }
+.ping-bar.status-unknown .chart-line { stroke: #888; }
+.ping-bar.status-unknown .chart-dots { fill: #888; }
 
 @keyframes pingActivity {
     0%, 80%, 100% { 
@@ -566,32 +586,63 @@ function renderConnectionMonitor(data) {
         return history;
     }
     
-    // Create ultra-minimal SVG line chart
+    // Create SVG line chart
     function createSVGChart(history, currentStatus) {
-        const width = 100;
+        const width = 190;
         const height = 20;
+        const padding = 2;
         
         const validData = history.filter(h => h.last_response_time && h.status === 'up');
         if (validData.length < 2) {
-            return `<div class="no-chart-data">—</div>`;
+            return `<div class="no-chart-data">No data</div>`;
         }
         
-        // Use full SVG space - no padding
+        // Calculate scales
         const minTime = Math.min(...validData.map(h => h.last_response_time));
         const maxTime = Math.max(...validData.map(h => h.last_response_time));
         const timeRange = maxTime - minTime || 1;
         
-        // Generate path that fills entire SVG space
-        const pathData = validData.map((h, i) => {
-            const x = (i / (validData.length - 1)) * width;
-            const y = height - ((h.last_response_time - minTime) / timeRange) * height;
-            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        // Generate path points
+        const points = validData.map((h, i) => {
+            const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+            const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+            return `${x},${y}`;
         }).join(' ');
         
-        // Simple color based on status
-        const color = currentStatus === 'up' ? '#28a745' : '#dc3545';
+        // Generate area path (for gradient fill)
+        const areaPoints = validData.map((h, i) => {
+            const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+            const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+            return `${x},${y}`;
+        });
+        const areaPath = `M${areaPoints[0]} L${areaPoints.join(' L')} L${areaPoints[areaPoints.length-1].split(',')[0]},${height-padding} L${areaPoints[0].split(',')[0]},${height-padding} Z`;
         
-        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;"><path d="${pathData}" fill="none" stroke="${color}" stroke-width="1" vector-rendering="crispEdges"/></svg>`;
+        return `
+            <svg class="ping-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="chartGradient-${Date.now()}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:currentColor;stop-opacity:0.8"/>
+                        <stop offset="100%" style="stop-color:currentColor;stop-opacity:0"/>
+                    </linearGradient>
+                </defs>
+                
+                <!-- Grid lines -->
+                <line class="chart-grid" x1="0" y1="${height/2}" x2="${width}" y2="${height/2}"/>
+                
+                <!-- Area fill -->
+                <path class="chart-area" d="${areaPath}"/>
+                
+                <!-- Line -->
+                <polyline class="chart-line" points="${points}"/>
+                
+                <!-- Dots for data points -->
+                ${validData.map((h, i) => {
+                    const x = (i / (validData.length - 1)) * (width - padding * 2) + padding;
+                    const y = height - padding - ((h.last_response_time - minTime) / timeRange) * (height - padding * 2);
+                    return `<circle class="chart-dots" cx="${x}" cy="${y}" r="1.5"/>`;
+                }).join('')}
+            </svg>
+        `;
     }
 
     

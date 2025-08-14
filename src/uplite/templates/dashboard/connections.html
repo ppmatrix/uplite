@@ -182,93 +182,6 @@
     </div>
 </div>
 
-<!-- Edit Connection Modal -->
-<div class="modal fade" id="editConnectionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit Connection</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="editConnectionForm" enctype="multipart/form-data">
-                <div class="modal-body">
-                    <input type="hidden" id="editConnectionId" name="id">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Connection Name *</label>
-                                <input type="text" class="form-control" id="editName" name="name" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Connection Type *</label>
-                                <select class="form-select" id="editConnectionType" name="connection_type" required>
-                                    <option value="http">HTTP/HTTPS</option>
-                                    <option value="ping">Ping</option>
-                                    <option value="tcp">TCP Port</option>
-                                    <option value="database">Database</option>
-                                </select>
-                                <small class="text-muted">Connection type can be changed if needed</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" class="form-control" id="editDescription" name="description">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Connection Logo</label>
-                        <input type="file" class="form-control" name="logo" accept="image/*">
-                        <small class="text-muted">Upload a new logo or leave empty to keep current one</small>
-                    </div>
-                        <div class="col-md-8">
-                            <div class="mb-3">
-                    <div class="row">
-                                <label class="form-label">Target *</label>
-                                <input type="text" class="form-control" id="editTarget" name="target" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Port</label>
-                                <input type="number" class="form-control" id="editPort" name="port" min="1" max="65535">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Timeout (seconds)</label>
-                                <input type="number" class="form-control" id="editTimeout" name="timeout" min="1" max="60">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Check Interval (seconds)</label>
-                                <input type="number" class="form-control" id="editCheckInterval" name="check_interval" min="30" max="3600">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="editIsActive" name="is_active">
-                                    <label class="form-check-label" for="editIsActive">Active (enable monitoring)</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning">Update Connection</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -286,8 +199,6 @@ function checkConnection(connectionId) {
         credentials: 'same-origin'
     })
             .then(response => {
-                console.log("Response status:", response.status);
-                console.log("Response headers:", response.headers);
                 return response.json();
             })
     .then(data => {
@@ -499,7 +410,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
-            console.log("FormData created:", formData);
             console.log("Form fields:", Array.from(formData.entries()));
             
             // Convert empty strings to null for non-file fields
@@ -512,8 +422,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData  // Send FormData directly for file upload support
             })
             .then(response => {
-                console.log("Response status:", response.status);
-                console.log("Response headers:", response.headers);
                 return response.json();
             })
             .then(data => {
@@ -553,7 +461,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
-            console.log("FormData created:", formData);
             console.log("Form fields:", Array.from(formData.entries()));
             // For file uploads, handle FormData properly
             const connectionId = formData.get("id");
@@ -570,8 +477,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: formData  // Send FormData directly for file upload support
             })
             .then(response => {
-                console.log("Response status:", response.status);
-                console.log("Response headers:", response.headers);
                 return response.json();
             })
             .then(data => {
@@ -587,7 +492,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         alert('Connection updated successfully');
                     }
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('editConnectionModal'));
                     modal.hide();
                     location.reload();
                 }

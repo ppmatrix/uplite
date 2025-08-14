@@ -412,7 +412,6 @@ function loadWidgetData() {
     
     return fetch(`/api/dashboard/refresh`)
         .then(response => {
-            console.log("API response status:", response.status);
             if (response.status === 401 || response.status === 403) {
                 throw new Error("Authentication required - please refresh the page and login");
             }
@@ -459,7 +458,6 @@ function makeConnectionClickable(element, url, connectionName) {
 }
 
 function renderConnectionMonitor(data) {
-    console.log("📊 renderConnectionMonitor called with:", data);
     
     const widgetBody = document.querySelector('[id^="widget-"][id$="-body"]');
     
@@ -475,12 +473,10 @@ function renderConnectionMonitor(data) {
     }
     
     if (!data.connections || data.connections.length === 0) {
-        console.log("⚠️ No connections in data");
         widgetBody.innerHTML = '<div class="alert alert-warning">No connection data available</div>';
         return;
     }
     
-    console.log(`✅ Processing ${data.connections.length} connections`);
     
     // Generate summary section from connection data
     const upCount = data.connections.filter(conn => conn.last_status === 'up').length;
@@ -623,10 +619,6 @@ function renderConnectionMonitor(data) {
                 </div>
                 <div class="connection-column connection-time">
                     ${(() => {
-                    console.log(`Time badge for ${conn.name}:`, {
-                        median_response_time: conn.median_response_time,
-                        last_response_time: conn.last_response_time
-                    });
                     
                     const responseTime = conn.median_response_time || conn.last_response_time;
                     if (!responseTime) {
@@ -646,10 +638,6 @@ function renderConnectionMonitor(data) {
                     const roundedTime = Math.round(responseTime);
                     const title = conn.median_response_time ? 'Median response time' : 'Current response time';
                     
-                    console.log(`Badge for ${conn.name}: ${roundedTime}ms (${colorClass})`);
-                    return `<div class="response-time-display ${colorClass}" title="${title}">${roundedTime}ms</div>`;
-                })()}
-                </div>
                 <div class="connection-column connection-link">
                     ${isClickable ? '<i class="bi bi-box-arrow-up-right external-link-icon"></i>' : '<span class="link-placeholder"></span>'}
                 </div>

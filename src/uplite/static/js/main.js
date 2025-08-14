@@ -241,7 +241,6 @@ window.UpLite = {
 function checkConnections() {
     UpLite.api.get('/api/dashboard/refresh')
         .then(function(data) {
-            console.log('Dashboard refreshed:', data);
             // Update UI if needed
         })
         .catch(function(error) {

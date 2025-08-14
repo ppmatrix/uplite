@@ -6,10 +6,39 @@
     --warning-color: #ffc107;
     --danger-color: #dc3545;
     --info-color: #17a2b8;
+    
+    /* Light theme variables */
+    --bg-color: #f8f9fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #e9ecef;
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --shadow: rgba(0, 0, 0, 0.075);
+    --shadow-hover: rgba(0, 0, 0, 0.15);
+    --navbar-bg: #343a40;
+    --navbar-text: #ffffff;
+    --widget-header-bg: linear-gradient(90deg, #f8f9fa, #e9ecef);
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --bg-secondary: #2d3748;
+    --bg-tertiary: #4a5568;
+    --text-color: #e9ecef;
+    --text-muted: #a0aec0;
+    --border-color: #4a5568;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --shadow-hover: rgba(0, 0, 0, 0.5);
+    --navbar-bg: #1a202c;
+    --navbar-text: #e9ecef;
+    --widget-header-bg: linear-gradient(90deg, #4a5568, #2d3748);
 }
 
 body {
-    background-color: #f8f9fa;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .hero-section {
@@ -25,34 +54,38 @@ body {
 
 .card {
     border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    transition: box-shadow 0.15s ease-in-out;
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    box-shadow: 0 0.125rem 0.25rem var(--shadow);
+    transition: box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
 
 .card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.5rem 1rem var(--shadow-hover);
 }
 
 .widget {
-    background: white;
+    background: var(--bg-secondary);
+    color: var(--text-color);
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow);
     margin-bottom: 1.5rem;
-    transition: transform 0.2s ease-in-out;
+    transition: transform 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
 
 .widget:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 8px var(--shadow-hover);
 }
 
 .widget-header {
-    background: linear-gradient(90deg, #f8f9fa, #e9ecef);
-    border-bottom: 1px solid #dee2e6;
+    background: var(--widget-header-bg);
+    border-bottom: 1px solid var(--border-color);
     border-radius: 8px 8px 0 0;
     padding: 1rem 1.25rem;
     font-weight: 600;
-    color: #495057;
+    color: var(--text-color);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .widget-body {
@@ -100,12 +133,13 @@ body {
 
 .metric-card {
     text-align: center;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1rem;
-    background: white;
-    transition: all 0.2s ease-in-out;
+    background: var(--bg-secondary);
+    color: var(--text-color);
+    transition: all 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
 
 .metric-card:hover {
@@ -118,14 +152,25 @@ body {
     font-weight: 700;
     line-height: 1;
     margin-bottom: 0.5rem;
+    color: var(--text-color);
 }
 
 .metric-label {
     font-size: 0.875rem;
-    color: #6c757d;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+.navbar {
+    background-color: var(--navbar-bg) !important;
+    transition: background-color 0.3s ease;
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+    color: var(--navbar-text) !important;
+    transition: color 0.3s ease;
 }
 
 .navbar-brand {
@@ -150,12 +195,34 @@ body {
 }
 
 .list-group-item {
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: background-color 0.15s ease-in-out;
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    transition: background-color 0.15s ease-in-out, color 0.3s ease;
 }
 
 .list-group-item:hover {
     background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-color);
+}
+
+.theme-toggle i {
+    font-size: 1.1rem;
 }
 
 /* Loading animations */
@@ -178,35 +245,13 @@ body {
     }
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bs-body-bg: #1a1a1a;
-        --bs-body-color: #e9ecef;
-    }
-    
-    .widget {
-        background: #2d3748;
-        color: #e9ecef;
-    }
-    
-    .widget-header {
-        background: linear-gradient(90deg, #4a5568, #2d3748);
-        color: #e9ecef;
-    }
-    
-    .metric-card {
-        background: #2d3748;
-        border-color: #4a5568;
-        color: #e9ecef;
-    }
-}
-
 /* Connection Management Styles */
 .connection-card .card-header {
-    background: linear-gradient(90deg, #f8f9fa, #e9ecef);
-    border-bottom: 1px solid #dee2e6;
+    background: var(--widget-header-bg);
+    border-bottom: 1px solid var(--border-color);
     font-weight: 600;
+    color: var(--text-color);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .connection-actions .btn {
@@ -218,9 +263,31 @@ body {
     margin-right: 0;
 }
 
+.modal-content {
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 .modal-header {
-    background: linear-gradient(90deg, #f8f9fa, #e9ecef);
-    border-bottom: 2px solid #dee2e6;
+    background: var(--widget-header-bg);
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-color);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.form-control, .form-select {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--text-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
 .form-check-input:checked {
@@ -263,13 +330,37 @@ body {
     }
 }
 
-/* Form improvements */
-.form-control:focus,
-.form-select:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
 .invalid-feedback {
     display: block;
+}
+
+/* Dropdown styles for dark theme */
+.dropdown-menu {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    transition: background-color 0.3s ease;
+}
+
+.dropdown-item {
+    color: var(--text-color);
+    transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-color);
+}
+
+.dropdown-divider {
+    border-color: var(--border-color);
+}
+
+/* Ensure proper text color inheritance */
+p, h1, h2, h3, h4, h5, h6, span, div {
+    color: inherit;
+}
+
+/* Text muted class override */
+.text-muted {
+    color: var(--text-muted) !important;
 }

@@ -1,6 +1,9 @@
 // UpLite Main JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize theme
+    initializeTheme();
+    
     // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -32,8 +35,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Theme Management
+function initializeTheme() {
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    if (!themeToggle || !themeIcon) return;
+    
+    // Get saved theme from localStorage or default to light
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    
+    // Apply the theme
+    applyTheme(savedTheme);
+    
+    // Add click event listener
+    themeToggle.addEventListener('click', function() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        applyTheme(newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        // Show notification
+        UpLite.notify.info(`Switched to ${newTheme} theme`);
+    });
+}
+
+function applyTheme(theme) {
+    const themeIcon = document.getElementById('theme-icon');
+    
+    // Set the data-theme attribute on the html element
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Update the icon
+    if (themeIcon) {
+        if (theme === 'dark') {
+            themeIcon.className = 'bi bi-moon-fill';
+        } else {
+            themeIcon.className = 'bi bi-sun-fill';
+        }
+    }
+    
+    // Update Bootstrap components that need manual theme handling
+    updateBootstrapTheme(theme);
+}
+
+function updateBootstrapTheme(theme) {
+    // Update navbar
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        if (theme === 'dark') {
+            navbar.classList.remove('navbar-light');
+            navbar.classList.add('navbar-dark');
+        } else {
+            navbar.classList.remove('navbar-dark');
+            navbar.classList.add('navbar-light');
+        }
+    }
+    
+    // Update any other Bootstrap components that need theme-specific classes
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        // Bootstrap alerts work fine with CSS variables, no changes needed
+    });
+}
+
 // Global functions
 window.UpLite = {
+    // Theme functions
+    theme: {
+        toggle: function() {
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.click();
+            }
+        },
+        
+        set: function(theme) {
+            if (theme === 'light' || theme === 'dark') {
+                applyTheme(theme);
+                localStorage.setItem('theme', theme);
+            }
+        },
+        
+        get: function() {
+            return document.documentElement.getAttribute('data-theme') || 'light';
+        }
+    },
+
     // API helper functions
     api: {
         get: function(url) {
@@ -198,3 +287,12 @@ function renderWidgetData(widgetId, data, widgetBody) {
     // For now, just show raw data
     widgetBody.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
 }
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + Shift + T to toggle theme
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        UpLite.theme.toggle();
+    }
+});

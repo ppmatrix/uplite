@@ -314,137 +314,150 @@ function checkConnection(connectionId) {
 
 function editConnection(connectionId) {
     console.log("editConnection called with ID:", connectionId);
-    const button = event.target.closest('button');
+    const button = event.target.closest("button");
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Loading...';
+    button.innerHTML = "<i class=\"bi bi-arrow-clockwise\"></i> Loading...";
     button.disabled = true;
     
-    fetch('/api/connections/' + connectionId, {
-        method: 'GET',
-        credentials: 'same-origin'
+    fetch("/api/connections/" + connectionId, {
+        method: "GET",
+        credentials: "same-origin"
     })
-            .then(response => {
-                console.log("Response status:", response.status);
-                console.log("Response headers:", response.headers);
-                return response.json();
-            })
+    .then(response => response.json())
     .then(data => {
-        // Fill the form
-        document.getElementById('editConnectionId').value = data.id;
-        document.getElementById('editName').value = data.name;
-        document.getElementById('editDescription').value = data.description || '';
-        document.getElementById('editTarget').value = data.target;
-        document.getElementById('editPort').value = data.port || '';
-        document.getElementById('editTimeout').value = data.timeout;
-        document.getElementById('editCheckInterval').value = data.check_interval;
-        document.getElementById('editIsActive').checked = data.is_active;
-        
-        // Set the dropdown - SIMPLE approach that works
-        const dropdown = document.getElementById('editConnectionType');
-        dropdown.value = data.connection_type;
-        
-        // Show modal
-        console.log("About to show modal");
-        console.log("Modal element:", document.getElementById("editConnectionModal"));
-        const modalElement = document.getElementById("editConnectionModal");
-        if (!modalElement) {
-            console.error("Modal element not found!");
-            return;
-        }
-        const modal = new bootstrap.Modal(modalElement);
-        try {
-            console.log("Attempting to show modal...");
-            modal.show();
-            console.log("Modal show() called successfully");
-        
-        // Alternative method if Bootstrap modal fails
-        if (!modalElement.classList.contains("show")) {
-            console.log("Modal still not visible, trying alternative method...");
-            modalElement.style.display = "block";
-            modalElement.classList.add("show");
-            document.body.classList.add("modal-open");
-            
-            // Add backdrop
-            const backdrop = document.createElement("div");
-            backdrop.className = "modal-backdrop fade show";
-            document.body.appendChild(backdrop);
-            
-            // Force modal dialog positioning
-            const modalDialog = modalElement.querySelector(".modal-dialog");
-            if (modalDialog) {
-                modalDialog.style.transform = "translateY(0)";
-                modalDialog.style.opacity = "1";
-            const dialogRect = modalDialog.getBoundingClientRect();
-            console.log("Modal dialog position:", {
-                top: dialogRect.top,
-                left: dialogRect.left,
-                width: dialogRect.width,
-                height: dialogRect.height,
-                display: getComputedStyle(modalDialog).display,
-                visibility: getComputedStyle(modalDialog).visibility
-            });
-                console.log("Applied manual modal dialog styling");
-            
-            // Add close handler to backdrop
-            backdrop.addEventListener("click", function() {
-                modalElement.style.display = "none";
-                modalElement.classList.remove("show");
-                document.body.classList.remove("modal-open");
-                backdrop.remove();
-                console.log("Modal closed via backdrop click");
-            
-            // Force modal z-index and positioning
-            modalElement.style.zIndex = "9999";
-            modalElement.style.position = "fixed";
-            modalElement.style.top = "0";
-            modalElement.style.left = "0";
-            modalElement.style.width = "100%";
-            modalElement.style.height = "100%";
-            
-            // Force center the modal dialog
-            if (modalDialog) {
-                modalDialog.style.position = "fixed";
-                modalDialog.style.top = "50%";
-                modalDialog.style.left = "50%";
-                modalDialog.style.transform = "translate(-50%, -50%)";
-                modalDialog.style.zIndex = "10000";
-                modalDialog.style.display = "block";
-                modalDialog.style.visibility = "visible";
-                console.log("Applied aggressive modal centering");
-            
-            // Last resort: scroll modal into view
-            modalDialog.scrollIntoView({ behavior: "smooth", block: "center" });
-            
-            // Add visible border for debugging
-            modalDialog.style.border = "3px solid red";
-            modalDialog.style.backgroundColor = "white";
-            }
-            });
-            }
-        }
-        } catch (error) {
-            console.error("Error showing modal:", error);
-        }
+        // Create a simple overlay edit form
+        createEditOverlay(data);
         
         // Reset button
         button.innerHTML = originalText;
         button.disabled = false;
     })
     .catch(error => {
-        console.error('Error:', error);
-        if (typeof UpLite !== 'undefined' && UpLite.notify) {
-            UpLite.notify.error('Failed to load connection data');
-        } else {
-            alert('Failed to load connection data');
+        console.error("Error:", error);
+        alert("Failed to load connection data");
         
         // Reset button on error
         button.innerHTML = originalText;
         button.disabled = false;
+    });
+}
+
+function createEditOverlay(data) {
+    // Remove any existing overlay
+    const existingOverlay = document.getElementById("editOverlay");
+    if (existingOverlay) {
+        existingOverlay.remove();
+    }
+    
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.id = "editOverlay";
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    // Create form container
+    const formContainer = document.createElement("div");
+    formContainer.style.cssText = `
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        max-width: 600px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    formContainer.innerHTML = `
+        <h5>Edit Connection</h5>
+        <form id="simpleEditForm">
+            <input type="hidden" id="editId" value="${data.id}">
+            <div class="mb-3">
+                <label class="form-label">Connection Name *</label>
+                <input type="text" class="form-control" id="editName" value="${data.name}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-control" id="editDesc" value="${data.description || ""}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Target *</label>
+                <input type="text" class="form-control" id="editTarget" value="${data.target}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Logo</label>
+                <input type="file" class="form-control" id="editLogo" accept="image/*">
+                <small class="text-muted">Leave empty to keep current logo</small>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">Update</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditOverlay()">Cancel</button>
+            </div>
+        </form>
+    `;
+    
+    overlay.appendChild(formContainer);
+    document.body.appendChild(overlay);
+    
+    // Add form handler
+    document.getElementById("simpleEditForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        submitEditForm(data.id);
+    });
+    
+    // Close on overlay click
+    overlay.addEventListener("click", function(e) {
+        if (e.target === overlay) {
+            closeEditOverlay();
+        }
+    });
+}
+
+function closeEditOverlay() {
+    const overlay = document.getElementById("editOverlay");
+    if (overlay) {
+        overlay.remove();
+    }
+}
+
+function submitEditForm(connectionId) {
+    const formData = new FormData();
+    formData.append("name", document.getElementById("editName").value);
+    formData.append("description", document.getElementById("editDesc").value);
+    formData.append("target", document.getElementById("editTarget").value);
+    
+    const logoFile = document.getElementById("editLogo").files[0];
+    if (logoFile) {
+        formData.append("logo", logoFile);
+    }
+    
+    fetch("/api/connections/" + connectionId, {
+        method: "PUT",
+        credentials: "same-origin",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert("Connection updated successfully!");
+            closeEditOverlay();
+            location.reload();
         }
     })
-    .finally(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
+    .catch(error => {
+        console.error("Error:", error);
+        alert("Failed to update connection");
     });
 }
 

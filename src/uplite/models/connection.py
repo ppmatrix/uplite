@@ -22,6 +22,9 @@ class Connection(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Logo for visual identification
+    logo_filename = db.Column(db.String(255))  # stores filename of uploaded logo
+    
     # Status tracking
     last_check = db.Column(db.DateTime)
     last_status = db.Column(db.String(20))  # 'up', 'down', 'unknown'
@@ -111,6 +114,7 @@ class Connection(db.Model):
             'last_response_time': self.last_response_time,
             'median_response_time': self.get_median_response_time(),
             'last_error': self.last_error,
+            'logo_filename': self.logo_filename,
             'config_options': self.config_options,
             'history': self.get_chart_history()
         }

@@ -593,8 +593,11 @@ function renderConnectionMonitor(data) {
                 <div class="connection-column connection-status">
                     <div class="status-led ${ledClass}"></div>
                 </div>
+                </div>
+                <div class="connection-column connection-logo">
+                    ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
+                </div>
                 <div class="connection-column connection-info">
-                    <div class="connection-name">${conn.name}</div>
                     <div class="connection-description">${conn.description || conn.target}</div>
                 </div>
                 <div class="connection-column connection-chart">

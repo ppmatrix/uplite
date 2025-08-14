@@ -1,12 +1,56 @@
 """API views for UpLite."""
 
 from flask import Blueprint, jsonify, request
+
+import os
+from werkzeug.utils import secure_filename
+from werkzeug.datastructures import FileStorage
 from flask_login import login_required, current_user
 
 from ..app import db
 from ..models.connection import Connection
 from ..models.widget_config import WidgetConfig
 from ..utils.connection_checker import ConnectionChecker
+
+
+# Configuration for file uploads
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "images", "connections")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+
+def allowed_file(filename):
+    """Check if file has allowed extension."""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def handle_logo_upload(file):
+    """Handle logo file upload and return filename or None."""
+    if not file or file.filename == "":
+        return None
+    
+    if not allowed_file(file.filename):
+        raise ValueError("Invalid file type. Only PNG, JPG, JPEG, GIF allowed.")
+    
+    # Check file size
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    if file_length > MAX_FILE_SIZE:
+        raise ValueError("File too large. Maximum size is 2MB.")
+    file.seek(0)  # Reset file pointer
+    
+    # Generate secure filename
+    filename = secure_filename(file.filename)
+    # Add timestamp to avoid conflicts
+    import time
+    filename = f"{int(time.time())}_{filename}"
+    
+    # Create upload directory if it does not exist
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
+    # Save file
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(file_path)
+    
+    return filename
 
 bp = Blueprint('api', __name__)
 
@@ -148,34 +192,48 @@ def internal_error(error):
     """Handle 500 errors for API endpoints."""
     return jsonify({'error': 'Internal server error'}), 500
 
-@bp.route('/connections', methods=['POST'])
+@bp.route("/connections", methods=["POST"])
 @login_required
 def add_connection():
-    """Add a new connection."""
-    data = request.get_json()
+    """Add a new connection with optional logo upload."""
+    # Handle both form data (with files) and JSON data (backward compatibility)
+    if request.content_type and "multipart/form-data" in request.content_type:
+        # Form data with possible file upload
+        data = request.form.to_dict()
+        logo_file = request.files.get("logo")
+    else:
+        # JSON data (backward compatibility)
+        data = request.get_json()
+        logo_file = None
     
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return jsonify({"error": "No data provided"}), 400
     
-    required_fields = ['name', 'connection_type', 'target']
+    required_fields = ["name", "connection_type", "target"]
     for field in required_fields:
         if not data.get(field):
-            return jsonify({'error': f'Missing required field: {field}'}), 400
+            return jsonify({"error": f"Missing required field: {field}"}), 400
     
     # Validate connection type
-    valid_types = ['http', 'ping', 'tcp', 'database']
-    if data['connection_type'] not in valid_types:
-        return jsonify({'error': f'Invalid connection type. Must be one of: {", ".join(valid_types)}'}), 400
+    valid_types = ["http", "ping", "tcp", "database"]
+    if data["connection_type"] not in valid_types:
+        return jsonify({"error": f"Invalid connection type. Must be one of: {", ".join(valid_types)}"}), 400
     
     try:
+        # Handle logo upload
+        logo_filename = None
+        if logo_file:
+            logo_filename = handle_logo_upload(logo_file)
+        
         connection = Connection(
-            name=data['name'],
-            description=data.get('description'),
-            connection_type=data['connection_type'],
-            target=data['target'],
-            port=data.get('port'),
-            timeout=int(data.get('timeout', 10)),
-            check_interval=int(data.get('check_interval', 60))
+            name=data["name"],
+            description=data.get("description") or None,
+            connection_type=data["connection_type"],
+            target=data["target"],
+            port=int(data["port"]) if data.get("port") else None,
+            timeout=int(data.get("timeout", 10)),
+            check_interval=int(data.get("check_interval", 60)),
+            logo_filename=logo_filename
         )
         
         db.session.add(connection)
@@ -183,34 +241,66 @@ def add_connection():
         
         return jsonify(connection.to_dict()), 201
     
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
-
-
-@bp.route('/connections/<int:connection_id>', methods=['PUT'])
+        return jsonify({"error": str(e)}), 500
+@bp.route("/connections/<int:connection_id>", methods=["PUT"])
 @login_required
 def update_connection(connection_id):
-    """Update a connection."""
+    """Update a connection with optional logo upload."""
     connection = Connection.query.get_or_404(connection_id)
-    data = request.get_json()
+    
+    # Handle both form data (with files) and JSON data (backward compatibility)
+    if request.content_type and "multipart/form-data" in request.content_type:
+        # Form data with possible file upload
+        data = request.form.to_dict()
+        logo_file = request.files.get("logo")
+    else:
+        # JSON data (backward compatibility)
+        data = request.get_json()
+        logo_file = None
     
     if not data:
-        return jsonify({'error': 'No data provided'}), 400
+        return jsonify({"error": "No data provided"}), 400
     
     try:
+        # Handle logo upload (if provided)
+        if logo_file:
+            # Delete old logo file if it exists
+            if connection.logo_filename:
+                old_file_path = os.path.join(UPLOAD_FOLDER, connection.logo_filename)
+                if os.path.exists(old_file_path):
+                    os.remove(old_file_path)
+            
+            # Upload new logo
+            connection.logo_filename = handle_logo_upload(logo_file)
+        
         # Update allowed fields
-        updateable_fields = ['connection_type', 'name', 'description', 'target', 'port', 'timeout', 'check_interval', 'is_active']
+        updateable_fields = ["connection_type", "name", "description", "target", "port", "timeout", "check_interval", "is_active"]
         for field in updateable_fields:
             if field in data:
-                setattr(connection, field, data[field])
+                value = data[field]
+                # Convert string boolean values
+                if field == "is_active":
+                    value = value in ["true", "True", True, "1", 1]
+                # Convert port to int if provided
+                elif field == "port" and value:
+                    value = int(value)
+                # Convert timeout and check_interval to int
+                elif field in ["timeout", "check_interval"] and value:
+                    value = int(value)
+                setattr(connection, field, value)
         
         db.session.commit()
         return jsonify(connection.to_dict())
     
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @bp.route('/connections/<int:connection_id>', methods=['DELETE'])

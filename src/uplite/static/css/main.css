@@ -424,3 +424,47 @@ p, h1, h2, h3, h4, h5, h6, span, div {
     font-size: 1.3rem;
     margin-right: 0.5rem;
 }
+
+/* Connection Logo Styling */
+.connection-logo {
+    flex: 0 0 auto;
+    margin-right: 12px;
+}
+
+.connection-logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+    transition: all 0.3s ease;
+}
+
+/* Enhance shadow on hover */
+.connection-item:hover .connection-logo-img {
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+    transform: scale(1.05);
+}
+
+/* Responsive logo sizing */
+@media (max-width: 768px) {
+    .connection-logo-img {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .connection-logo-img {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Ensure logo column doesn't break layout */
+.connection-column.connection-logo {
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

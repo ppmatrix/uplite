@@ -114,7 +114,7 @@
                 <h5 class="modal-title">Add New Connection</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="addConnectionForm">
+            <form id="addConnectionForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -139,6 +139,10 @@
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <input type="text" class="form-control" name="description">
+                    <div class="mb-3">
+                        <label class="form-label">Connection Logo</label>
+                        <input type="file" class="form-control" name="logo" accept="image/*">
+                        <small class="text-muted">Upload a logo for visual identification (PNG, JPG, GIF - max 2MB)</small>
                     </div>
                     <div class="row">
                         <div class="col-md-8">
@@ -186,7 +190,7 @@
                 <h5 class="modal-title">Edit Connection</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="editConnectionForm">
+            <form id="editConnectionForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" id="editConnectionId" name="id">
                     <div class="row">
@@ -213,9 +217,14 @@
                         <label class="form-label">Description</label>
                         <input type="text" class="form-control" id="editDescription" name="description">
                     </div>
-                    <div class="row">
+                    <div class="mb-3">
+                        <label class="form-label">Connection Logo</label>
+                        <input type="file" class="form-control" name="logo" accept="image/*">
+                        <small class="text-muted">Upload a new logo or leave empty to keep current one</small>
+                    </div>
                         <div class="col-md-8">
                             <div class="mb-3">
+                    <div class="row">
                                 <label class="form-label">Target *</label>
                                 <input type="text" class="form-control" id="editTarget" name="target" required>
                             </div>
@@ -377,42 +386,50 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add connection form
     const addForm = document.getElementById('addConnectionForm');
     if (addForm) {
-        addForm.addEventListener('submit', function(e) {
+        addForm.addEventListener("submit", function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
             
-            // Convert empty strings to null
-            if (!data.port) data.port = null;
-            if (!data.description) data.description = null;
+            // Convert empty strings to null for non-file fields
+            if (!formData.get("port")) formData.delete("port");
+            if (!formData.get("description")) formData.delete("description");
             
-            fetch('/api/connections', {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+            fetch("/api/connections", {
+                method: "POST",
+                credentials: "same-origin",
+                body: formData  // Send FormData directly for file upload support
             })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
+                    if (typeof UpLite !== "undefined" && UpLite.notify) {
                         UpLite.notify.error(data.error);
                     } else {
                         alert(data.error);
                     }
                 } else {
-                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                        UpLite.notify.success('Connection added successfully');
+                    if (typeof UpLite !== "undefined" && UpLite.notify) {
+                        UpLite.notify.success("Connection added successfully");
                     } else {
-                        alert('Connection added successfully');
+                        alert("Connection added successfully");
                     }
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addConnectionModal'));
-                    modal.hide();
+                    
+                    // Close modal and refresh
+                    const modal = bootstrap.Modal.getInstance(document.getElementById("addConnectionModal"));
                     location.reload();
                 }
             })
             .catch(error => {
+                console.error("Error:", error);
+                if (typeof UpLite !== "undefined" && UpLite.notify) {
+                    UpLite.notify.error("Failed to add connection");
+                } else {
+                    alert("Failed to add connection");
+                }
+            });
+        });
+    }
                 console.error('Error:', error);
                 if (typeof UpLite !== 'undefined' && UpLite.notify) {
                     UpLite.notify.error('Failed to add connection');
@@ -430,20 +447,19 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            const connectionId = data.id;
+            // For file uploads, handle FormData properly
+            const connectionId = formData.get("id");
+            formData.delete("id");
             
-            // Convert empty strings to null
-            if (!data.port) data.port = null;
-            if (!data.description) data.description = null;
-            data.is_active = document.getElementById('editIsActive').checked;
-            delete data.id;
+            // Convert empty strings to null for non-file fields
+            if (!formData.get("port")) formData.delete("port");
+            if (!formData.get("description")) formData.delete("description");
+            formData.set("is_active", document.getElementById("editIsActive").checked);
             
-            fetch('/api/connections/' + connectionId, {
-                method: 'PUT',
-                credentials: 'same-origin',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data)
+            fetch("/api/connections/" + connectionId, {
+                method: "PUT",
+                credentials: "same-origin",
+                body: formData  // Send FormData directly for file upload support
             })
             .then(response => response.json())
             .then(data => {

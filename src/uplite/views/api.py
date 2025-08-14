@@ -195,6 +195,10 @@ def internal_error(error):
 @bp.route("/connections", methods=["POST"])
 @login_required
 def add_connection():
+    print(f"DEBUG: add_connection called, request.method={request.method}")  
+    print(f"DEBUG: request.content_type={request.content_type}")
+    print(f"DEBUG: request.form={dict(request.form)}")
+    print(f"DEBUG: request.files={dict(request.files)}")
     """Add a new connection with optional logo upload."""
     # Handle both form data (with files) and JSON data (backward compatibility)
     if request.content_type and "multipart/form-data" in request.content_type:

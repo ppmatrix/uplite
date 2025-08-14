@@ -285,6 +285,11 @@ function checkConnection(connectionId) {
         method: 'POST',
         credentials: 'same-origin'
     })
+            .then(response => {
+                console.log("Response status:", response.status);
+                console.log("Response headers:", response.headers);
+                return response.json();
+            })
     .then(response => response.json())
     .then(data => {
         if (typeof UpLite !== 'undefined' && UpLite.notify) {
@@ -318,6 +323,11 @@ function editConnection(connectionId) {
         method: 'GET',
         credentials: 'same-origin'
     })
+            .then(response => {
+                console.log("Response status:", response.status);
+                console.log("Response headers:", response.headers);
+                return response.json();
+            })
     .then(response => response.json())
     .then(data => {
         // Fill the form
@@ -390,6 +400,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
+            console.log("FormData created:", formData);
+            console.log("Form fields:", Array.from(formData.entries()));
             
             // Convert empty strings to null for non-file fields
             if (!formData.get("port")) formData.delete("port");
@@ -399,6 +411,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: "POST",
                 credentials: "same-origin",
                 body: formData  // Send FormData directly for file upload support
+            })
+            .then(response => {
+                console.log("Response status:", response.status);
+                console.log("Response headers:", response.headers);
+                return response.json();
             })
             .then(response => response.json())
             .then(data => {
@@ -417,6 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Close modal and refresh
                     const modal = bootstrap.Modal.getInstance(document.getElementById("addConnectionModal"));
+                    if (modal) modal.hide();
                     location.reload();
                 }
             })
@@ -430,16 +448,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-                console.error('Error:', error);
-                if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                    UpLite.notify.error('Failed to add connection');
-                } else {
-                    alert('Failed to add connection');
-                }
-            });
-        });
-    }
-    
     // Edit connection form
     const editForm = document.getElementById('editConnectionForm');
     if (editForm) {
@@ -447,6 +455,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const formData = new FormData(this);
+            console.log("FormData created:", formData);
+            console.log("Form fields:", Array.from(formData.entries()));
             // For file uploads, handle FormData properly
             const connectionId = formData.get("id");
             formData.delete("id");
@@ -460,6 +470,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: "PUT",
                 credentials: "same-origin",
                 body: formData  // Send FormData directly for file upload support
+            })
+            .then(response => {
+                console.log("Response status:", response.status);
+                console.log("Response headers:", response.headers);
+                return response.json();
             })
             .then(response => response.json())
             .then(data => {

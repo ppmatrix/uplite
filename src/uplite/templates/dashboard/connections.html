@@ -368,6 +368,31 @@ function editConnection(connectionId) {
             const backdrop = document.createElement("div");
             backdrop.className = "modal-backdrop fade show";
             document.body.appendChild(backdrop);
+            
+            // Force modal dialog positioning
+            const modalDialog = modalElement.querySelector(".modal-dialog");
+            if (modalDialog) {
+                modalDialog.style.transform = "translateY(0)";
+                modalDialog.style.opacity = "1";
+                console.log("Applied manual modal dialog styling");
+            
+            // Add close handler to backdrop
+            backdrop.addEventListener("click", function() {
+                modalElement.style.display = "none";
+                modalElement.classList.remove("show");
+                document.body.classList.remove("modal-open");
+                backdrop.remove();
+                console.log("Modal closed via backdrop click");
+            
+            // Force modal z-index and positioning
+            modalElement.style.zIndex = "9999";
+            modalElement.style.position = "fixed";
+            modalElement.style.top = "0";
+            modalElement.style.left = "0";
+            modalElement.style.width = "100%";
+            modalElement.style.height = "100%";
+            });
+            }
         }
         } catch (error) {
             console.error("Error showing modal:", error);

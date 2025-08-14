@@ -628,8 +628,14 @@ function renderConnectionMonitor(data) {
                 </div>
                 <div class="connection-column connection-time">
                     ${(() => {
+                    console.log(`Time badge for ${conn.name}:`, {
+                        median_response_time: conn.median_response_time,
+                        last_response_time: conn.last_response_time
+                    });
+                    
                     const responseTime = conn.median_response_time || conn.last_response_time;
                     if (!responseTime) {
+                        console.log(`No response time data for ${conn.name}`);
                         return '<div class="response-time-display badge bg-danger">ERR</div>';
                     }
                     
@@ -642,8 +648,11 @@ function renderConnectionMonitor(data) {
                         colorClass = 'badge bg-warning';
                     }
                     
+                    const roundedTime = Math.round(responseTime);
                     const title = conn.median_response_time ? 'Median response time' : 'Current response time';
-                    return `<div class="response-time-display ${colorClass}" title="${title}">${Math.round(responseTime)}ms</div>`;
+                    
+                    console.log(`Badge for ${conn.name}: ${roundedTime}ms (${colorClass})`);
+                    return `<div class="response-time-display ${colorClass}" title="${title}">${roundedTime}ms</div>`;
                 })()}
                 </div>
                 <div class="connection-column connection-link">

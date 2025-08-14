@@ -313,6 +313,7 @@ function checkConnection(connectionId) {
 }
 
 function editConnection(connectionId) {
+    console.log("editConnection called with ID:", connectionId);
     const button = event.target.closest('button');
     const originalText = button.innerHTML;
     button.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Loading...';
@@ -343,8 +344,13 @@ function editConnection(connectionId) {
         dropdown.value = data.connection_type;
         
         // Show modal
+        console.log("About to show modal");
         const modal = new bootstrap.Modal(document.getElementById('editConnectionModal'));
         modal.show();
+        
+        // Reset button
+        button.innerHTML = originalText;
+        button.disabled = false;
     })
     .catch(error => {
         console.error('Error:', error);
@@ -352,6 +358,10 @@ function editConnection(connectionId) {
             UpLite.notify.error('Failed to load connection data');
         } else {
             alert('Failed to load connection data');
+        
+        // Reset button on error
+        button.innerHTML = originalText;
+        button.disabled = false;
         }
     })
     .finally(() => {

@@ -345,8 +345,33 @@ function editConnection(connectionId) {
         
         // Show modal
         console.log("About to show modal");
-        const modal = new bootstrap.Modal(document.getElementById('editConnectionModal'));
-        modal.show();
+        console.log("Modal element:", document.getElementById("editConnectionModal"));
+        const modalElement = document.getElementById("editConnectionModal");
+        if (!modalElement) {
+            console.error("Modal element not found!");
+            return;
+        }
+        const modal = new bootstrap.Modal(modalElement);
+        try {
+            console.log("Attempting to show modal...");
+            modal.show();
+            console.log("Modal show() called successfully");
+        
+        // Alternative method if Bootstrap modal fails
+        if (!modalElement.classList.contains("show")) {
+            console.log("Modal still not visible, trying alternative method...");
+            modalElement.style.display = "block";
+            modalElement.classList.add("show");
+            document.body.classList.add("modal-open");
+            
+            // Add backdrop
+            const backdrop = document.createElement("div");
+            backdrop.className = "modal-backdrop fade show";
+            document.body.appendChild(backdrop);
+        }
+        } catch (error) {
+            console.error("Error showing modal:", error);
+        }
         
         // Reset button
         button.innerHTML = originalText;

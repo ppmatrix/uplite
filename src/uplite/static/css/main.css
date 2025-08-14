@@ -369,3 +369,46 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 .badge {
     border: none !important;
 }
+
+/* Logo styling */
+.navbar-logo {
+    height: 56px;
+    max-height: 56px;
+    width: auto;
+    vertical-align: middle;
+}
+
+/* Ensure logo works well in both light and dark themes */
+.navbar-brand .navbar-logo {
+    filter: none;
+    transition: filter 0.3s ease;
+}
+
+/* Optional: Add slight opacity on hover */
+.navbar-brand:hover .navbar-logo {
+    opacity: 0.8;
+}
+
+/* Hero logo styling for index page */
+.hero-logo {
+    height: 120px;
+    max-height: 120px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Responsive hero logo */
+@media (max-width: 768px) {
+    .hero-logo {
+        height: 80px;
+        max-height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-logo {
+        height: 60px;
+        max-height: 60px;
+    }
+}

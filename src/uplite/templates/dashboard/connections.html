@@ -290,7 +290,6 @@ function checkConnection(connectionId) {
                 console.log("Response headers:", response.headers);
                 return response.json();
             })
-    .then(response => response.json())
     .then(data => {
         if (typeof UpLite !== 'undefined' && UpLite.notify) {
             UpLite.notify.success('Connection checked successfully');
@@ -328,7 +327,6 @@ function editConnection(connectionId) {
                 console.log("Response headers:", response.headers);
                 return response.json();
             })
-    .then(response => response.json())
     .then(data => {
         // Fill the form
         document.getElementById('editConnectionId').value = data.id;
@@ -417,7 +415,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Response headers:", response.headers);
                 return response.json();
             })
-            .then(response => response.json())
             .then(data => {
                 if (data.error) {
                     if (typeof UpLite !== "undefined" && UpLite.notify) {
@@ -476,7 +473,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Response headers:", response.headers);
                 return response.json();
             })
-            .then(response => response.json())
             .then(data => {
                 if (data.error) {
                     if (typeof UpLite !== 'undefined' && UpLite.notify) {

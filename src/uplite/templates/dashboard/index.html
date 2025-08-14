@@ -62,37 +62,43 @@
 }
 
 /* Column 1: Status LED */
+/* Column 1: Status LED */
 .connection-status {
     width: 18px;
     justify-content: center;
     flex-shrink: 0;
 }
 
-/* Column 2: Connection Info */
+/* Column 2: Logo */
+.connection-logo {
+    width: 40px;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+/* Column 3: Connection Info */
 .connection-info {
     flex: 1;
-    min-width: 110px;
-    padding-left: 10px;
+    min-width: 90px;
+    padding-left: 6px;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
 }
 
-/* Column 3: Chart */
+/* Column 4: Chart */
 .connection-chart {
-    width: 80px;
+    width: 70px;
     justify-content: center;
     flex-shrink: 0;
-    margin: 0 6px;
+    margin: 0 4px;
 }
 
-/* Column 4: Time Badge */
+/* Column 5: Time Badge */
 .connection-time {
-    width: 55px;
+    width: 50px;
     justify-content: center;
-    flex-shrink: 0;
-}
-
 /* Column 5: External Link */
 .connection-link {
     width: 18px;
@@ -598,6 +604,7 @@ function renderConnectionMonitor(data) {
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>
                 <div class="connection-column connection-info">
+                    <div class="connection-name">${conn.name}</div>
                     <div class="connection-description">${conn.description || conn.target}</div>
                 </div>
                 <div class="connection-column connection-chart">

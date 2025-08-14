@@ -68,57 +68,44 @@
     justify-content: center;
 }
 
-/* Column 1: Status LED */
-/* Base connection column styling */
-.connection-column {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
-/* Column 1: Status LED */
-.connection-status {
-    width: 18px;
-    justify-content: center;
-    flex-shrink: 0;
-}
 
-/* Column 2: Logo */
+/* Column 1: Logo */
 .connection-logo {
-    width: 36px;
+    width: 40px;
     justify-content: center;
     flex-shrink: 0;
     margin-right: 8px;
 }
 
-/* Column 3: Connection Info */
+/* Column 2: Connection Info */
 .connection-info {
     flex: 1;
-    min-width: 80px;
+    min-width: 100px;
     padding-left: 6px;
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
 }
 
-/* Column 4: Chart */
+/* Column 3: Chart */
 .connection-chart {
-    width: 65px;
+    width: 75px;
     justify-content: center;
     flex-shrink: 0;
     margin: 0 4px;
 }
 
-/* Column 5: Time Badge */
+/* Column 4: Time Badge */
 
-/* Column 6: Link Icon */
+/* Column 5: Link Icon */
 .connection-link {
-    width: 30px;
+    width: 35px;
     justify-content: center;
     flex-shrink: 0;
 }
 .connection-time {
-    width: 45px;
+    width: 55px;
     justify-content: center;
 /* Column 5: External Link */
 .connection-link {
@@ -173,47 +160,6 @@
     box-shadow: none !important;
 }
 
-/* Status LED */
-.status-led {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-right: 15px;
-    flex-shrink: 0;
-    position: relative;
-}
-
-.status-led.status-up {
-    background-color: #28a745;
-    box-shadow: 0 0 8px rgba(40,167,69,0.4);
-}
-
-.status-led.status-down {
-    background-color: #dc3545;
-    box-shadow: 0 0 8px rgba(220,53,69,0.4);
-}
-
-.status-led.status-unknown {
-    background-color: #6c757d;
-    box-shadow: 0 0 8px rgba(108,117,125,0.4);
-}
-
-.status-led.status-up::after {
-    content: '';
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    background-color: #34d058;
-    border-radius: 50%;
-    top: 3px;
-    left: 3px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.3; }
-    100% { opacity: 1; }
 }
 
 /* Connection Info */
@@ -604,9 +550,6 @@ function renderConnectionMonitor(data) {
         connectionsHtml += `
         <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
             <div class="connection-item ${statusClass}" data-url="${conn.target}" data-name="${conn.name}">
-                <div class="connection-column connection-status">
-                    <div class="status-led ${ledClass}"></div>
-                </div>
                 <div class="connection-column connection-logo">
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>

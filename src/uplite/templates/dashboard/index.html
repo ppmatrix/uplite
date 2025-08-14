@@ -540,7 +540,7 @@ function renderConnectionMonitor(data) {
     
     
     
-    // Generate sample historical data for demonstration
+    // Generate sample historical data as fallback when no real data available
     function generateSampleHistory(conn) {
         const baseTime = conn.median_response_time || conn.last_response_time || 100;
         const variance = baseTime * 0.3; // 30% variance
@@ -563,20 +563,28 @@ function renderConnectionMonitor(data) {
         const width = 80;
         const height = 20;
         
-        const validData = history.filter(h => h.last_response_time && h.status === 'up');
+        // Handle both real history data and sample data formats
+        const validData = history.filter(h => {
+            const responseTime = h.response_time || h.last_response_time;
+            const status = h.status;
+            return responseTime && status === 'up';
+        });
+        
         if (validData.length < 2) {
             return `<div class="no-chart-data">—</div>`;
         }
         
         // Use full SVG space - no padding
-        const minTime = Math.min(...validData.map(h => h.last_response_time));
-        const maxTime = Math.max(...validData.map(h => h.last_response_time));
+        const responseTimes = validData.map(h => h.response_time || h.last_response_time);
+        const minTime = Math.min(...responseTimes);
+        const maxTime = Math.max(...responseTimes);
         const timeRange = maxTime - minTime || 1;
         
         // Generate path that fills entire SVG space
         const pathData = validData.map((h, i) => {
+            const responseTime = h.response_time || h.last_response_time;
             const x = (i / (validData.length - 1)) * width;
-            const y = height - ((h.last_response_time - minTime) / timeRange) * height;
+            const y = height - ((responseTime - minTime) / timeRange) * height;
             return `${i === 0 ? 'M' : 'L'}${x},${y}`;
         }).join(' ');
         
@@ -600,9 +608,9 @@ function renderConnectionMonitor(data) {
         
         // Generate historical chart data
         const generateChart = (conn) => {
-            // This will be populated with real historical data
-            const sampleData = conn.history || generateSampleHistory(conn);
-            return createSVGChart(sampleData, conn.last_status);
+            // Use real historical data if available, fallback to sample data
+            const historyData = conn.history && conn.history.length > 0 ? conn.history : generateSampleHistory(conn);
+            return createSVGChart(historyData, conn.last_status);
         };
         
         connectionsHtml += `

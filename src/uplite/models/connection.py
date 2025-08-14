@@ -66,6 +66,18 @@ class Connection(db.Model):
         """Get median response time from the last N periods."""
         from .connection_history import ConnectionHistory
         return ConnectionHistory.get_median_response_time(self.id, periods)
+    def get_chart_history(self, limit=20):
+        """Get recent history for chart visualization."""
+        from .connection_history import ConnectionHistory
+        
+        recent_entries = ConnectionHistory.query.filter_by(connection_id=self.id)\
+            .order_by(ConnectionHistory.timestamp.desc())\
+            .limit(limit).all()
+        
+        # Reverse to get chronological order (oldest first)
+        recent_entries.reverse()
+        
+        return [entry.to_dict() for entry in recent_entries]
     
     def is_healthy(self):
         """Check if the connection is considered healthy."""
@@ -99,7 +111,8 @@ class Connection(db.Model):
             'last_response_time': self.last_response_time,
             'median_response_time': self.get_median_response_time(),
             'last_error': self.last_error,
-            'config_options': self.config_options
+            'config_options': self.config_options,
+            'history': self.get_chart_history()
         }
     
     def __repr__(self):

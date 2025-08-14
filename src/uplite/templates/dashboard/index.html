@@ -141,12 +141,22 @@
 
 .connection-item.status-up:hover {
     border-color: var(--success-color);
+    background: rgba(40, 167, 69, 0.1);
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.25);
+}
 }
 
 .connection-item.status-down:hover {
     border-color: var(--danger-color);
+
+.connection-item.status-unknown:hover {
+    border-color: var(--warning-color);
+    background: rgba(255, 193, 7, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.25);
+}
+    background: rgba(220, 53, 69, 0.1);
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
+}
 }
 
 .non-clickable {

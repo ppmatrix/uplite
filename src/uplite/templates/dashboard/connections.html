@@ -374,6 +374,15 @@ function editConnection(connectionId) {
             if (modalDialog) {
                 modalDialog.style.transform = "translateY(0)";
                 modalDialog.style.opacity = "1";
+            const dialogRect = modalDialog.getBoundingClientRect();
+            console.log("Modal dialog position:", {
+                top: dialogRect.top,
+                left: dialogRect.left,
+                width: dialogRect.width,
+                height: dialogRect.height,
+                display: getComputedStyle(modalDialog).display,
+                visibility: getComputedStyle(modalDialog).visibility
+            });
                 console.log("Applied manual modal dialog styling");
             
             // Add close handler to backdrop
@@ -391,6 +400,25 @@ function editConnection(connectionId) {
             modalElement.style.left = "0";
             modalElement.style.width = "100%";
             modalElement.style.height = "100%";
+            
+            // Force center the modal dialog
+            if (modalDialog) {
+                modalDialog.style.position = "fixed";
+                modalDialog.style.top = "50%";
+                modalDialog.style.left = "50%";
+                modalDialog.style.transform = "translate(-50%, -50%)";
+                modalDialog.style.zIndex = "10000";
+                modalDialog.style.display = "block";
+                modalDialog.style.visibility = "visible";
+                console.log("Applied aggressive modal centering");
+            
+            // Last resort: scroll modal into view
+            modalDialog.scrollIntoView({ behavior: "smooth", block: "center" });
+            
+            // Add visible border for debugging
+            modalDialog.style.border = "3px solid red";
+            modalDialog.style.backgroundColor = "white";
+            }
             });
             }
         }

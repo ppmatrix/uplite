@@ -622,7 +622,6 @@ function renderConnectionMonitor(data) {
                     
                     const responseTime = conn.median_response_time || conn.last_response_time;
                     if (!responseTime) {
-                        console.log(`No response time data for ${conn.name}`);
                         return '<div class="response-time-display badge bg-danger">ERR</div>';
                     }
                     
@@ -637,66 +636,13 @@ function renderConnectionMonitor(data) {
                     
                     const roundedTime = Math.round(responseTime);
                     const title = conn.median_response_time ? 'Median response time' : 'Current response time';
-                    
+                    return `<div class="response-time-display ${colorClass}" title="${title}">${roundedTime}ms</div>`;
+                })()}
+                </div>
                 <div class="connection-column connection-link">
                     ${isClickable ? '<i class="bi bi-box-arrow-up-right external-link-icon"></i>' : '<span class="link-placeholder"></span>'}
                 </div>
             </div>
         </div>
         `;
-    });
-    connectionsHtml += '</div>';
-    
-    widgetBody.innerHTML = summaryHtml + connectionsHtml;
-    
-    // Add click handlers to clickable connections
-    const connectionItems = widgetBody.querySelectorAll('.connection-item');
-    connectionItems.forEach(item => {
-        const url = item.dataset.url;
-        const name = item.dataset.name;
-        makeConnectionClickable(item, url, name);
-    });
-}
-</script>
-
-<style>
-.spin {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Responsive adjustments for connection items */
-@media (max-width: 768px) {
-    .connection-item {
-        min-height: 60px;
-        padding: 10px 15px;
-    }
-    
-    .connection-name {
-        font-size: 0.9rem;
-    }
-    
-    .connection-description {
-        font-size: 0.8rem;
-    }
-}
-
-@media (min-width: 1200px) {
-    .connections-list .col-lg-4 {
-        flex: 0 0 33.333333%;
-        max-width: 33.333333%;
-    }
-}
-
-@media (min-width: 992px) and (max-width: 1199px) {
-    .connections-list .col-md-6 {
-        flex: 0 0 50%;
-        max-width: 50%;
-    }
-}
-</style>
-{% endblock %}
+                    

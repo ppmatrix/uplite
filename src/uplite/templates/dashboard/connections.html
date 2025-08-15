@@ -1127,28 +1127,62 @@ function submitEnhancedEditForm(connectionId) {
 }
 function deleteConnection(connectionId) {
     if (confirm('Are you sure you want to delete this connection?')) {
+        console.log('Attempting to delete connection ID:', connectionId);
+        
         fetch('/api/connections/' + connectionId, {
             method: 'DELETE',
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .then(response => {
+            console.log('Delete response status:', response.status);
+            console.log('Delete response ok:', response.ok);
+            
             if (response.ok) {
-                if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                    UpLite.notify.success('Connection deleted');
-                } else {
-                    alert('Connection deleted');
-                }
-                location.reload();
+                return response.json().then(data => {
+                    console.log('Delete success response:', data);
+                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
+                        UpLite.notify.success('Connection deleted successfully');
+                    } else {
+                        alert('Connection deleted successfully');
+                    }
+                    location.reload();
+                });
             } else {
-                throw new Error('Delete failed');
+                // Handle non-OK responses
+                return response.text().then(text => {
+                    console.error('Delete failed with status:', response.status);
+                    console.error('Delete response body:', text);
+                    
+                    let errorMessage = 'Failed to delete connection';
+                    try {
+                        const errorData = JSON.parse(text);
+                        if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    } catch (e) {
+                        // Not JSON, use the text as-is
+                        if (text.length > 0 && text.length < 100) {
+                            errorMessage = text;
+                        }
+                    }
+                    
+                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
+                        UpLite.notify.error('Delete failed: ' + errorMessage);
+                    } else {
+                        alert('Delete failed: ' + errorMessage);
+                    }
+                });
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Delete request failed:', error);
             if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                UpLite.notify.error('Failed to delete connection');
+                UpLite.notify.error('Network error: Failed to delete connection');
             } else {
-                alert('Failed to delete connection');
+                alert('Network error: Failed to delete connection');
             }
         });
     }

@@ -49,8 +49,26 @@ class ConnectionChecker:
             
             # Prepare URL
             url = connection.target
-            if not url.startswith(('http://', 'https://')):
-                url = f'http://{url}'
+            
+            # Add port if specified and not already in URL
+            if connection.port and f":{connection.port}" not in url:
+                # Parse the URL to add port correctly
+                if url.startswith(("http://", "https://")):
+                    # URL already has protocol, add port before path
+                    from urllib.parse import urlparse, urlunparse
+                    parsed = urlparse(url)
+                    if not parsed.port:  # Only add port if not already specified
+                        netloc = f"{parsed.hostname}:{connection.port}"
+                        if parsed.username:
+                            netloc = f"{parsed.username}{":"+parsed.password if parsed.password else ""}@{netloc}"
+                        url = urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+                else:
+                    # No protocol, add port to hostname
+                    url = f"{url}:{connection.port}"
+            
+            # Add protocol if missing
+            if not url.startswith(("http://", "https://")):
+                url = f"http://{url}"
             
             # Make request
             response = requests.get(

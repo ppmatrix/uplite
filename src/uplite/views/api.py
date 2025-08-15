@@ -253,11 +253,11 @@ def add_connection():
                 logo_filename = suggester.copy_icon_to_connections(suggested_icon)
         
         connection = Connection(
-            name=data["name"],
-            description=data.get("description") or None,
-            connection_type=data["connection_type"],
-            target=data["target"],
-            port=int(data["port"]) if data.get("port") else None,
+            name=data["name"].strip(),
+            description=data.get("description", "").strip() or None,
+            connection_type=data["connection_type"].strip(),
+            target=data["target"].strip(),
+            port=int(data["port"]) if data.get("port") and str(data["port"]).strip() else None,
             timeout=int(data.get("timeout", 10)),
             check_interval=int(data.get("check_interval", 60)),
             logo_filename=logo_filename
@@ -303,6 +303,9 @@ def update_connection(connection_id):
         for field in updateable_fields:
             if field in data:
                 value = data[field]
+                # Strip whitespace for string fields
+                if isinstance(value, str):
+                    value = value.strip()
                 # Convert string boolean values
                 if field == "is_active":
                     value = value in ["true", "True", True, "1", 1]
@@ -312,6 +315,9 @@ def update_connection(connection_id):
                 # Convert timeout and check_interval to int
                 elif field in ["timeout", "check_interval"] and value:
                     value = int(value)
+                # Skip empty strings for optional fields
+                elif field in ["description"] and not value:
+                    value = None
                 setattr(connection, field, value)
         
         db.session.commit()

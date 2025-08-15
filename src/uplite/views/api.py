@@ -146,7 +146,6 @@ def update_widget(widget_id):
     if 'is_enabled' in data:
         widget.is_enabled = data['is_enabled']
         db.session.commit()
-        print(f"DEBUG: Connection {connection_id} deleted successfully")
     
     return jsonify(widget.to_dict())
 
@@ -270,14 +269,12 @@ def add_connection():
         
         db.session.add(connection)
         db.session.commit()
-        print(f"DEBUG: Connection {connection_id} deleted successfully")
         
         return jsonify(connection.to_dict()), 201
     
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        print(f"DEBUG: Error deleting connection {connection_id}: {e}")
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 @bp.route("/connections/<int:connection_id>", methods=["PUT"])
@@ -332,40 +329,28 @@ def update_connection(connection_id):
                 setattr(connection, field, value)
         
         db.session.commit()
-        print(f"DEBUG: Connection {connection_id} deleted successfully")
         return jsonify(connection.to_dict())
     
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     except Exception as e:
-        print(f"DEBUG: Error deleting connection {connection_id}: {e}")
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 
 @bp.route('/connections/<int:connection_id>', methods=['DELETE'])
-    """Delete a connection."""
-    print(f"DEBUG: Delete request for connection ID: {connection_id}")
-    
 @login_required
-    """Delete a connection."""
-    print(f"DEBUG: Delete request for connection ID: {connection_id}")
-    
 def delete_connection(connection_id):
-    """Delete a connection."""
     print(f"DEBUG: Delete request for connection ID: {connection_id}")
-    
     """Delete a connection."""
     connection = Connection.query.get_or_404(connection_id)
     
     try:
         db.session.delete(connection)
         db.session.commit()
-        print(f"DEBUG: Connection {connection_id} deleted successfully")
         return jsonify({'message': 'Connection deleted successfully'})
     
     except Exception as e:
-        print(f"DEBUG: Error deleting connection {connection_id}: {e}")
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 

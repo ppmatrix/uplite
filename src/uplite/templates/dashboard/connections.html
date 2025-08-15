@@ -314,140 +314,467 @@ function createEnhancedEditOverlay(data) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.7);
         z-index: 9999;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
     `;
     
-    // Create form container
+    // Create form container (larger to accommodate all fields)
     const formContainer = document.createElement("div");
     formContainer.style.cssText = `
         background: white;
-        border-radius: 8px;
-        padding: 20px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 80vh;
+        border-radius: 12px;
+        padding: 0;
+        max-width: 800px;
+        width: 100%;
+        max-height: 90vh;
         overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
     `;
     
     formContainer.innerHTML = `
-        <h5>Edit Connection</h5>
-        <form id="enhancedEditForm">
-            <input type="hidden" id="editId" value="${data.id}">
-            <div class="mb-3">
-                <label class="form-label">Connection Name *</label>
-                <input type="text" class="form-control" id="editName" value="${data.name}" required>
+        <!-- Modal Header -->
+        <div style="padding: 1.5rem 2rem 0 2rem; border-bottom: 1px solid #dee2e6; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; color: #495057;">
+                    <i class="bi bi-pencil-square"></i> Edit Connection
+                </h4>
+                <button type="button" id="editHeaderCloseButton"
+                        style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6c757d;">
+                    &times;
+                </button>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Description</label>
-                <input type="text" class="form-control" id="editDesc" value="${data.description || ""}">
-            </div>
-            <div class="mb-3">
-                <label class="form-label">Target *</label>
-                <input type="text" class="form-control" id="editTarget" value="${data.target}" required>
-            </div>
-            
-            <!-- Simplified image selection for edit form -->
-            <div class="mb-3">
-                <label class="form-label">Image Options</label>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="edit_image_option" id="edit_keep_current" value="keep" checked>
-                    <label class="form-check-label" for="edit_keep_current">
-                        Keep current image
-                    </label>
+            <p style="margin: 0.5rem 0 1rem 0; color: #6c757d; font-size: 0.9rem;">
+                Modify connection settings and monitoring parameters
+            </p>
+        </div>
+        
+        <!-- Modal Body -->
+        <div style="padding: 0 2rem;">
+            <form id="enhancedEditForm">
+                <input type="hidden" id="editId" value="${data.id}">
+                
+                <!-- Basic Information Row -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Connection Name *</label>
+                            <input type="text" class="form-control" id="editName" value="${data.name}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Connection Type *</label>
+                            <select class="form-select" id="editConnectionType" required>
+                                <option value="http" ${data.connection_type === 'http' ? 'selected' : ''}>HTTP/HTTPS</option>
+                                <option value="ping" ${data.connection_type === 'ping' ? 'selected' : ''}>Ping</option>
+                                <option value="tcp" ${data.connection_type === 'tcp' ? 'selected' : ''}>TCP Port</option>
+                                <option value="database" ${data.connection_type === 'database' ? 'selected' : ''}>Database</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="edit_image_option" id="edit_upload_new" value="upload">
-                    <label class="form-check-label" for="edit_upload_new">
-                        Upload new image
-                    </label>
+
+                <!-- Description -->
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" id="editDesc" value="${data.description || ''}" 
+                           placeholder="Brief description of this connection">
                 </div>
-                <div id="edit_upload_section" style="display: none; margin-top: 0.5rem;">
-                    <input type="file" class="form-control" id="editLogo" accept="image/*">
-                    <small class="text-muted">Leave empty to keep current image</small>
+
+                <!-- Enhanced Image Selection System -->
+                <div class="image-selection-container">
+                    <h6><i class="bi bi-image"></i> Connection Image</h6>
+                    
+                    <!-- Current Image Display -->
+                    ${data.logo_filename ? `
+                    <div class="current-image-preview mb-3" style="padding: 0.75rem; background: #f8f9fa; border-radius: 0.375rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <img src="/static/images/connections/${data.logo_filename}" alt="Current image" 
+                                 style="max-width: 32px; max-height: 32px; object-fit: contain;">
+                            <span style="font-size: 0.875rem; color: #6c757d;">Current: ${data.logo_filename}</span>
+                        </div>
+                    </div>
+                    ` : '<p style="font-size: 0.875rem; color: #6c757d; margin-bottom: 1rem;">No image currently set</p>'}
+                    
+                    <!-- Image Options -->
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="edit_image_option" id="edit_keep_current" value="keep" checked>
+                        <label class="form-check-label" for="edit_keep_current">
+                            <i class="bi bi-check-circle"></i> Keep current image
+                        </label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="edit_image_option" id="edit_browse_icons" value="browse">
+                        <label class="form-check-label" for="edit_browse_icons">
+                            <i class="bi bi-grid-3x3-gap"></i> Choose from available icons
+                        </label>
+                    </div>
+                    <div class="icon-browser" id="edit-icon-browser" style="display: none; margin-top: 0.75rem;">
+                        <div class="search-box">
+                            <input type="text" class="form-control form-control-sm" id="edit-icon-search" 
+                                   placeholder="Search icons... (e.g., ${data.name.toLowerCase()})">
+                        </div>
+                        <div class="icon-grid" id="edit-icon-grid">
+                            <!-- Icons populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="edit_image_option" id="edit_upload_new" value="upload">
+                        <label class="form-check-label" for="edit_upload_new">
+                            <i class="bi bi-upload"></i> Upload custom image
+                        </label>
+                    </div>
+                    <div id="edit_upload_section" style="display: none; margin-top: 0.75rem;">
+                        <input type="file" class="form-control" id="editLogo" accept="image/*">
+                        <small class="form-text text-muted">PNG, JPG, GIF up to 2MB</small>
+                    </div>
+
+                    <!-- Hidden field for selected icon -->
+                    <input type="hidden" id="edit_logo_choice">
                 </div>
+
+                <!-- Target and Port Row -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">Target *</label>
+                            <input type="text" class="form-control" id="editTarget" value="${data.target}" required
+                                   placeholder="e.g., 10.10.77.51, pve.local, https://grafana.local">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Port</label>
+                            <input type="number" class="form-control" id="editPort" 
+                                   value="${data.port || ''}" min="1" max="65535"
+                                   placeholder="e.g., 8006, 3000">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Settings Row -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Timeout (seconds)</label>
+                            <input type="number" class="form-control" id="editTimeout" 
+                                   value="${data.timeout || 10}" min="1" max="60">
+                            <small class="form-text text-muted">Connection timeout in seconds</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Check Interval (seconds)</label>
+                            <input type="number" class="form-control" id="editCheckInterval" 
+                                   value="${data.check_interval || 60}" min="30" max="3600">
+                            <small class="form-text text-muted">How often to check this connection</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Toggle -->
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="editIsActive" 
+                               ${data.is_active !== false ? 'checked' : ''}>
+                        <label class="form-check-label" for="editIsActive">
+                            <strong>Active Monitoring</strong>
+                            <small class="d-block text-muted">Enable/disable monitoring for this connection</small>
+                        </label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div style="padding: 1.5rem 2rem; border-top: 1px solid #dee2e6; margin-top: 1.5rem; background: #f8f9fa;">
+            <div class="d-flex gap-2 justify-content-end">
+                <button type="button" class="btn btn-secondary" id="editCancelButton">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="submit" class="btn btn-warning" form="enhancedEditForm" id="editSubmitButton">
+                    <i class="bi bi-check-circle"></i> Update Connection
+                </button>
             </div>
-            
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-warning">Update</button>
-                <button type="button" class="btn btn-secondary" onclick="closeEditOverlay()">Cancel</button>
-            </div>
-        </form>
+        </div>
     `;
     
     overlay.appendChild(formContainer);
     document.body.appendChild(overlay);
     
-    // Add form handler
+    // Initialize image selection functionality for edit form
+    initializeEditImageSelection();
+    
+    // Add form handler with comprehensive field handling
     document.getElementById("enhancedEditForm").addEventListener("submit", function(e) {
         e.preventDefault();
-        submitEditForm(data.id);
+        submitEnhancedEditForm(data.id);
+    });
+    
+    // Add header close button handler
+    document.getElementById("editHeaderCloseButton").addEventListener("click", function() {
+        closeEditOverlay();
+    });
+    
+    // Add cancel button handler
+    document.getElementById("editCancelButton").addEventListener("click", function() {
+        closeEditOverlay();
     });
     
     // Handle image option changes for edit form
     document.querySelectorAll('input[name="edit_image_option"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            const uploadSection = document.getElementById('edit_upload_section');
-            if (this.value === 'upload') {
-                uploadSection.style.display = 'block';
-            } else {
-                uploadSection.style.display = 'none';
-            }
+            handleEditImageOptionChange(this.value);
         });
     });
     
-    // Close on overlay click
+    // Close on overlay click (but not on form container)
     overlay.addEventListener("click", function(e) {
         if (e.target === overlay) {
             closeEditOverlay();
         }
     });
+    
+    // Add keyboard shortcut (Escape to close)
+    const escapeHandler = function(e) {
+        if (e.key === 'Escape' && document.getElementById('editOverlay')) {
+            closeEditOverlay();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
 }
 
-function closeEditOverlay() {
-    const overlay = document.getElementById("editOverlay");
-    if (overlay) {
-        overlay.remove();
+function initializeEditImageSelection() {
+    // Initialize icon search functionality
+    const searchInput = document.getElementById('edit-icon-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchEditIcons(e.target.value);
+        });
     }
 }
 
-function submitEditForm(connectionId) {
+function handleEditImageOptionChange(option) {
+    const iconBrowser = document.getElementById('edit-icon-browser');
+    const uploadSection = document.getElementById('edit_upload_section');
+    const logoChoiceInput = document.getElementById('edit_logo_choice');
+
+    // Hide all sections first
+    if (iconBrowser) iconBrowser.style.display = 'none';
+    if (uploadSection) uploadSection.style.display = 'none';
+
+    switch (option) {
+        case 'keep':
+            if (logoChoiceInput) logoChoiceInput.value = '';
+            break;
+        case 'browse':
+            if (iconBrowser) {
+                iconBrowser.style.display = 'block';
+                loadEditAvailableIcons();
+            }
+            if (logoChoiceInput) logoChoiceInput.value = '';
+            break;
+        case 'upload':
+            if (uploadSection) uploadSection.style.display = 'block';
+            if (logoChoiceInput) logoChoiceInput.value = '';
+            break;
+    }
+}
+
+async function loadEditAvailableIcons(searchQuery = '') {
+    const iconGrid = document.getElementById('edit-icon-grid');
+    if (!iconGrid) return;
+
+    iconGrid.className = 'icon-grid loading';
+    iconGrid.innerHTML = '';
+
+    try {
+        const url = searchQuery
+            ? `/api/images/search?q=${encodeURIComponent(searchQuery)}&limit=100`
+            : '/api/images/available';
+
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin'
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        let icons;
+        if (searchQuery) {
+            icons = data.results || [];
+        } else {
+            icons = (data.icons || []).map(i => i.filename);
+        }
+
+        renderEditIconGrid(icons);
+
+    } catch (error) {
+        console.error('Error loading icons:', error);
+        iconGrid.className = 'icon-grid empty';
+        iconGrid.innerHTML = '<div class="text-center text-muted p-3">Failed to load icons</div>';
+    }
+}
+
+function renderEditIconGrid(icons) {
+    const iconGrid = document.getElementById('edit-icon-grid');
+    if (!iconGrid) return;
+
+    iconGrid.className = 'icon-grid';
+
+    if (icons.length === 0) {
+        iconGrid.className = 'icon-grid empty';
+        iconGrid.innerHTML = '';
+        return;
+    }
+
+    iconGrid.innerHTML = '';
+
+    icons.forEach(iconName => {
+        const iconElement = document.createElement('div');
+        iconElement.className = 'icon-option';
+        iconElement.dataset.icon = iconName;
+
+        const displayName = iconName.replace(/\.(png|jpg|jpeg|gif|svg)$/i, '');
+
+        iconElement.innerHTML = `
+            <img src="/static/apps_icons/${iconName}" alt="${displayName}" 
+                 onerror="this.parentElement.style.display='none';">
+            <small>${displayName}</small>
+        `;
+
+        iconElement.addEventListener('click', () => selectEditIcon(iconElement));
+        iconGrid.appendChild(iconElement);
+    });
+}
+
+function selectEditIcon(iconElement) {
+    const iconGrid = document.getElementById('edit-icon-grid');
+    const logoChoiceInput = document.getElementById('edit_logo_choice');
+
+    iconGrid.querySelectorAll('.icon-option').forEach(el => {
+        el.classList.remove('selected');
+    });
+
+    iconElement.classList.add('selected');
+    const iconName = iconElement.dataset.icon;
+
+    if (logoChoiceInput) {
+        logoChoiceInput.value = iconName;
+    }
+
+    const browseRadio = document.getElementById('edit_browse_icons');
+    if (browseRadio) {
+        browseRadio.checked = true;
+    }
+}
+
+function searchEditIcons(query) {
+    clearTimeout(window.editSearchTimeout);
+    window.editSearchTimeout = setTimeout(() => {
+        loadEditAvailableIcons(query);
+    }, 300);
+}
+
+function submitEnhancedEditForm(connectionId) {
     const formData = new FormData();
-    formData.append("name", document.getElementById("editName").value);
-    formData.append("description", document.getElementById("editDesc").value);
-    formData.append("target", document.getElementById("editTarget").value);
     
-    const logoFile = document.getElementById("editLogo").files[0];
-    const imageOption = document.querySelector('input[name="edit_image_option"]:checked').value;
+    // Add all form fields with proper validation
+    const fields = {
+        name: document.getElementById("editName").value.trim(),
+        description: document.getElementById("editDesc").value.trim(),
+        connection_type: document.getElementById("editConnectionType").value,
+        target: document.getElementById("editTarget").value.trim(),
+        port: document.getElementById("editPort").value.trim(),
+        timeout: document.getElementById("editTimeout").value,
+        check_interval: document.getElementById("editCheckInterval").value,
+        is_active: document.getElementById("editIsActive").checked
+    };
     
-    if (imageOption === 'upload' && logoFile) {
-        formData.append("logo", logoFile);
+    // Validate required fields
+    if (!fields.name) {
+        alert("Connection name is required");
+        return;
     }
+    if (!fields.target) {
+        alert("Target is required");
+        return;
+    }
+    
+    // Add fields to form data
+    Object.keys(fields).forEach(key => {
+        if (fields[key] !== '' && fields[key] !== null && fields[key] !== undefined) {
+            formData.append(key, fields[key]);
+        }
+    });
+    
+    // Handle image selection
+    const imageOption = document.querySelector('input[name="edit_image_option"]:checked')?.value;
+    
+    if (imageOption === 'upload') {
+        const logoFile = document.getElementById("editLogo").files[0];
+        if (logoFile) {
+            formData.append("logo", logoFile);
+        }
+    } else if (imageOption === 'browse') {
+        const logoChoice = document.getElementById("edit_logo_choice").value;
+        if (logoChoice) {
+            formData.append("logo_choice", logoChoice);
+        }
+    }
+    
+    // Show loading state
+    const submitButton = document.getElementById("editSubmitButton");
+    const originalText = submitButton.innerHTML;
+    submitButton.innerHTML = '<i class="bi bi-arrow-clockwise" style="animation: spin 1s linear infinite;"></i> Updating...';
+    submitButton.disabled = true;
     
     fetch("/api/connections/" + connectionId, {
         method: "PUT",
         credentials: "same-origin",
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log("Response status:", response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.error) {
             alert("Error: " + data.error);
         } else {
-            alert("Connection updated successfully!");
+            if (typeof UpLite !== 'undefined' && UpLite.notify) {
+                UpLite.notify.success('Connection updated successfully!');
+            } else {
+                alert("Connection updated successfully!");
+            }
             closeEditOverlay();
             location.reload();
         }
     })
     .catch(error => {
         console.error("Error:", error);
-        alert("Failed to update connection");
+        alert("Failed to update connection: " + error.message);
+    })
+    .finally(() => {
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
     });
 }
-
 function deleteConnection(connectionId) {
     if (confirm('Are you sure you want to delete this connection?')) {
         fetch('/api/connections/' + connectionId, {
@@ -536,5 +863,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function closeEditOverlay() {
+    const overlay = document.getElementById("editOverlay");
+    if (overlay) {
+        overlay.remove();
+    }
+}
 </script>
 {% endblock %}

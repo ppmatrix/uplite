@@ -25,6 +25,63 @@
 }
 .connection-icon-placeholder {
     font-size: 18px; color: #6c757d; width: 24px; text-align: center;
+/* Phase 2 Enhanced Styling */
+.status-dashboard .card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.search-filter-bar .input-group-text {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.search-filter-bar .form-control:focus,
+.search-filter-bar .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Enhanced connection cards */
+.connection-card .card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.connection-card .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #dee2e6;
+}
+
+.connection-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 500;
+}
+
+.connection-card .card-body {
+    background-color: #fff;
+}
+
+/* Action buttons spacing */
+.connection-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.connection-actions .btn {
+    flex: 1;
+    min-width: auto;
+}
+
+/* Status indicators enhanced */
+.status-indicator {
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8);
+}
 }
 </style>
 {% endblock %}
@@ -36,6 +93,93 @@
         <i class="bi bi-plus-circle"></i> Add Connection
     </button>
 </div>
+
+<!-- Status Dashboard Summary -->
+<div class="row mb-4 status-dashboard">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body py-3">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-collection text-primary fs-4 me-2"></i>
+                            <div>
+                                <div class="fs-5 fw-bold text-primary">{{ connections|length }}</div>
+                                <small class="text-muted">Total Connections</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-check-circle text-success fs-4 me-2"></i>
+                            <div>
+                                <div class="fs-5 fw-bold text-success">
+                                    {{ connections|selectattr("last_status", "equalto", "up")|list|length }}
+                                </div>
+                                <small class="text-muted">Online</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-x-circle text-danger fs-4 me-2"></i>
+                            <div>
+                                <div class="fs-5 fw-bold text-danger">
+                                    {{ connections|selectattr("last_status", "equalto", "down")|list|length }}
+                                </div>
+                                <small class="text-muted">Offline</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="bi bi-question-circle text-secondary fs-4 me-2"></i>
+                            <div>
+                                <div class="fs-5 fw-bold text-secondary">
+                                    {{ connections|rejectattr("last_status")|list|length + connections|selectattr("last_status", "equalto", "unknown")|list|length }}
+                                </div>
+                                <small class="text-muted">Unknown</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="row mb-4 status-dashboard">
+    <div class="col-md-4">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="connectionSearch" placeholder="Search connections...">
+        </div>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="up">🟢 Online</option>
+            <option value="down">🔴 Offline</option>
+            <option value="unknown">⚪ Unknown</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="typeFilter">
+            <option value="">All Types</option>
+            <option value="http">HTTP/HTTPS</option>
+            <option value="ping">Ping</option>
+            <option value="tcp">TCP Port</option>
+            <option value="database">Database</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" id="clearFilters">
+            <i class="bi bi-x-lg"></i> Clear
+        </button>
+    </div>
+</div>
+
 
 <div class="row">
     {% for connection in connections %}
@@ -250,6 +394,97 @@
 
 <script>
 // Simple, working JavaScript functions
+
+// Search and Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('connectionSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const connectionCards = document.querySelectorAll('.connection-card');
+
+    // Function to filter connections
+    function filterConnections() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const typeFilter = document.getElementById('typeFilter').value;
+        
+        let visibleCount = 0;
+        
+        connectionCards.forEach(card => {
+            const cardElement = card.querySelector('.card');
+            
+            // Get connection data from the card
+            const connectionName = cardElement.querySelector('strong').textContent.toLowerCase();
+            const connectionStatus = cardElement.querySelector('.connection-status').textContent.toLowerCase().trim();
+            const connectionType = cardElement.querySelector('.badge').textContent.toLowerCase();
+            
+            // Apply filters
+            let showCard = true;
+            
+            // Search filter
+            if (searchTerm && !connectionName.includes(searchTerm)) {
+                showCard = false;
+            }
+            
+            // Status filter
+            if (statusFilter && connectionStatus !== statusFilter) {
+                showCard = false;
+            }
+            
+            // Type filter  
+            if (typeFilter && !connectionType.includes(typeFilter)) {
+                showCard = false;
+            }
+            
+            // Show/hide card
+            if (showCard) {
+                card.style.display = '';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update the "no connections" message
+        updateNoConnectionsMessage(visibleCount);
+    }
+    
+    function updateNoConnectionsMessage(visibleCount) {
+        let noConnectionsDiv = document.querySelector('.no-connections-message');
+        
+        if (visibleCount === 0 && connectionCards.length > 0) {
+            if (!noConnectionsDiv) {
+                noConnectionsDiv = document.createElement('div');
+                noConnectionsDiv.className = 'col-12 no-connections-message';
+                noConnectionsDiv.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <i class="bi bi-funnel"></i>
+                        No connections match the current filters. Try adjusting your search or filters.
+                    </div>
+                `;
+                document.querySelector('.row').appendChild(noConnectionsDiv);
+            }
+            noConnectionsDiv.style.display = '';
+        } else if (noConnectionsDiv) {
+            noConnectionsDiv.style.display = 'none';
+        }
+    }
+    
+    function clearAllFilters() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        typeFilter.value = '';
+        filterConnections();
+    }
+    
+    // Event listeners
+    searchInput.addEventListener('input', filterConnections);
+    statusFilter.addEventListener('change', filterConnections);
+    typeFilter.addEventListener('change', filterConnections);
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+});
+
 
 function buildConnectionUrl(conn) {
     let url = conn.target;

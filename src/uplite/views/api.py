@@ -345,6 +345,10 @@ def delete_connection(connection_id):
     """Delete a connection."""
     connection = Connection.query.get_or_404(connection_id)
     
+    # Delete related connection history records first to avoid FK constraint issues
+    from ..models.connection_history import ConnectionHistory
+    ConnectionHistory.query.filter_by(connection_id=connection_id).delete()
+    
     try:
         db.session.delete(connection)
         db.session.commit()

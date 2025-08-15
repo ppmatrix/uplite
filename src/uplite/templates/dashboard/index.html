@@ -574,8 +574,8 @@ function renderConnectionMonitor(data) {
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>
                 <div class="connection-column connection-info">
-                    <div class="connection-name" style="font-size: 1.4rem !important; font-weight: 600 !important;">${conn.name}</div>
-                    <div class="connection-description" style="font-size: 1.1rem !important; line-height: 1.4 !important;">${conn.description || conn.target}</div>
+                    <div class="connection-name" style="font-size: 1rem !important; font-weight: 600 !important;">${conn.name}</div>
+                    <div class="connection-description" style="font-size: 0.8rem !important; line-height: 1.4 !important;">${conn.description || conn.target}</div>
                 </div>
                 <div class="connection-column connection-chart">
                     <div class="ping-chart-container">${generateChart(conn)}</div>

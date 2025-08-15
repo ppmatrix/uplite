@@ -254,6 +254,22 @@ body {
     transition: background 0.3s ease, color 0.3s ease;
 }
 
+/* Connection name in card header */
+.connection-card .card-header strong {
+    font-size: 1.3rem !important;        /* Adjust this value */
+    font-weight: 700 !important;         /* Adjust font weight if needed */
+    line-height: 1.2 !important;         /* Adjust line spacing */
+}
+
+
+/* Connection description in card body */
+.connection-card .card-text {
+    font-size: 1.1rem !important;        /* Adjust this value */
+    line-height: 1.4 !important;         /* Adjust line spacing */
+    margin-bottom: 1rem !important;      /* Adjust bottom spacing */
+    color: var(--text-color) !important; /* Use theme color */
+}
+
 .connection-actions .btn {
     margin-right: 0.25rem;
     margin-bottom: 0.25rem;
@@ -738,4 +754,32 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 
 .icon-grid::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Additional specificity for connection text sizing */
+.connection-card div.card div.card-header strong {
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+}
+
+.connection-card div.card div.card-body p.card-text {
+    font-size: 1.1rem !important;
+    line-height: 1.4 !important;
+}
+
+
+.connection-card .card-text {
+    color: blue !important;
+    font-size: 1.5rem !important;
+    background-color: lightgray !important;
+}
+
+.card-header strong {
+    color: green !important;
+    font-size: 2rem !important;
+}
+
+p.card-text {
+    color: purple !important;
+    font-size: 1.5rem !important;
 }

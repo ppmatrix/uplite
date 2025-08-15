@@ -239,10 +239,6 @@ def add_connection():
         logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
         logo_filename = handle_logo_selection(logo_choice, logo_file)
         
-        # Set logo_filename if we got one
-        if logo_filename:
-            connection.logo_filename = logo_filename
-        
         # Auto-suggest icon if none provided
         if not logo_filename:
             from ..utils.image_suggester import ImageSuggester

@@ -107,7 +107,6 @@ node_modules/
 # Docker
 .dockerignore
 
-
 # User-uploaded connection logos
 src/uplite/static/images/connections/*
 !src/uplite/static/images/connections/.gitkeep

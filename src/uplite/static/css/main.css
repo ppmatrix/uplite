@@ -431,7 +431,8 @@ p, h1, h2, h3, h4, h5, h6, span, div {
     margin-right: 12px;
 }
 
-.connection-logo-img {
+/*Adjust logo connection card size here*/
+.connection-logo-img { 
     width: 40px;
     height: 40px;
     object-fit: contain;

@@ -18,6 +18,14 @@
 .status-warning { background-color: #ffc107; }
 .status-danger { background-color: #dc3545; }
 .status-secondary { background-color: #6c757d; }
+/* Connection icons in cards */
+.connection-icon-small {
+    width: 24px; height: 24px; border-radius: 4px;
+    object-fit: cover;
+}
+.connection-icon-placeholder {
+    font-size: 18px; color: #6c757d; width: 24px; text-align: center;
+}
 </style>
 {% endblock %}
 
@@ -31,10 +39,17 @@
 
 <div class="row">
     {% for connection in connections %}
-    <div class="col-lg-6 connection-card">
+    <div class="col-xl-4 col-lg-6 col-md-6 connection-card">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
+                <div class="d-flex align-items-center">
+                    <!-- Connection Icon -->
+                    {% if connection.logo_filename %}
+                    <img src="/static/images/connections/{{ connection.logo_filename }}" 
+                         class="connection-icon-small me-2" alt="{{ connection.name }}">
+                    {% else %}
+                    <i class="bi bi-globe connection-icon-placeholder me-2"></i>
+                    {% endif %}
                     <strong>{{ connection.name }}</strong>
                     <span class="badge bg-secondary ms-2">{{ connection.connection_type }}</span>
                 </div>
@@ -61,7 +76,7 @@
                 <div class="row mt-2">
                     <div class="col-sm-6">
                         <small class="text-muted">
-                            <strong>Last Check:</strong> {{ connection.last_check.strftime('%Y-%m-%d %H:%M:%S') }}
+                            <strong>Last Check:</strong> {{ connection.last_check.strftime('%b %d, %H:%M') if connection.last_check else 'Never checked' }}
                         </small>
                     </div>
                     {% if connection.last_response_time %}
@@ -82,6 +97,9 @@
                 {% endif %}
                 
                 <div class="connection-actions mt-3">
+                    <button class="btn btn-sm btn-success" onclick="openConnection({target: '{{ connection.target }}', port: {{ connection.port or 'null' }}})" title="Open {{ connection.name }}">
+                        <i class="bi bi-box-arrow-up-right"></i> Open
+                    </button>
                     <button class="btn btn-sm btn-primary" onclick="checkConnection({{ connection.id }})">
                         <i class="bi bi-arrow-clockwise"></i> Check Now
                     </button>
@@ -232,6 +250,44 @@
 
 <script>
 // Simple, working JavaScript functions
+
+function buildConnectionUrl(conn) {
+    let url = conn.target;
+    
+    // Add port if specified and not already in URL
+    if (conn.port && !url.includes(":" + conn.port)) {
+        // Check if URL already has protocol
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            // Parse URL to add port correctly
+            try {
+                const urlObj = new URL(url);
+                if (!urlObj.port) {  // Only add port if not already specified
+                    urlObj.port = conn.port;
+                    url = urlObj.toString();
+                }
+            } catch (e) {
+                // If URL parsing fails, fall back to simple concatenation
+                url = url + ":" + conn.port;
+            }
+        } else {
+            // No protocol, add port to hostname
+            url = url + ":" + conn.port;
+        }
+    }
+    
+    // Add protocol if missing
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
+    
+    return url;
+}
+
+function openConnection(connectionData) {
+    const url = buildConnectionUrl(connectionData);
+    window.open(url, '_blank');
+}
+
 
 function checkConnection(connectionId) {
     const button = event.target.closest('button');

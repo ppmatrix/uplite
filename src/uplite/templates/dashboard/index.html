@@ -377,6 +377,38 @@ function isClickableUrl(url) {
     return false;
 }
 
+function buildConnectionUrl(conn) {
+    let url = conn.target;
+    
+    // Add port if specified and not already in URL
+    if (conn.port && !url.includes(":" + conn.port)) {
+        // Check if URL already has protocol
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            // Parse URL to add port correctly
+            try {
+                const urlObj = new URL(url);
+                if (!urlObj.port) {  // Only add port if not already specified
+                    urlObj.port = conn.port;
+                    url = urlObj.toString();
+                }
+            } catch (e) {
+                // If URL parsing fails, fall back to simple concatenation
+                url = url + ":" + conn.port;
+            }
+        } else {
+            // No protocol, add port to hostname
+            url = url + ":" + conn.port;
+        }
+    }
+    
+    // Add protocol if missing
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
+    
+    return url;
+}
+
 function makeConnectionClickable(element, url, connectionName) {
     if (!isClickableUrl(url)) {
         element.classList.add('non-clickable');
@@ -535,7 +567,7 @@ function renderConnectionMonitor(data) {
         
         connectionsHtml += `
         <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
-            <div class="connection-item ${statusClass}" data-url="${conn.target}" data-name="${conn.name}">
+            <div class="connection-item ${statusClass}" data-url="${buildConnectionUrl(conn)}" data-name="${conn.name}">
                 <div class="connection-column connection-logo">
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>

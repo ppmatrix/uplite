@@ -104,6 +104,21 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+
+/* Status area styling (error and working states) */
+.connection-card .text-success {
+    font-size: 0.75rem;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+.connection-card .bi-check-circle-fill {
+    color: #198754;
+}
+
+.connection-card .bi-exclamation-triangle-fill {
+    color: #dc3545;
+}
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     word-break: break-word;
@@ -267,13 +282,22 @@
                     {% endif %}
                 </div>
                 {% endif %}
-                {% if connection.last_error %}
+                <!-- Status Area (always present for consistent alignment) -->
                 <div class="row mt-2">
                     <div class="col-12">
-                        <small class="text-danger" title="{{ connection.last_error }}"><strong>Error:</strong> {{ connection.last_error }}</small>
+                        {% if connection.last_error %}
+                        <small class="text-danger" title="{{ connection.last_error }}">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            <strong>Error:</strong> {{ connection.last_error }}
+                        </small>
+                        {% else %}
+                        <small class="text-success">
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            <strong>Working</strong>
+                        </small>
+                        {% endif %}
                     </div>
                 </div>
-                {% endif %}
                 
                 <div class="connection-actions mt-3">
                     <button class="btn btn-sm btn-success" onclick="openConnection({target: '{{ connection.target }}', port: {{ connection.port or 'null' }}})" title="Open {{ connection.name }}">

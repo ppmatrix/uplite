@@ -22,8 +22,50 @@ def allowed_file(filename):
     """Check if file has allowed extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def handle_logo_selection(logo_choice, logo_file=None):
+    """Handle logo selection - either from apps_icons or file upload."""
+    from ..utils.image_suggester import ImageSuggester
+    
+    # Priority 1: Handle file upload (backward compatibility)
+    if logo_file and logo_file.filename and logo_file.filename != "":
+        return handle_logo_upload(logo_file)
+    
+    # Priority 2: Handle icon selection from apps_icons
+    if logo_choice:
+        suggester = ImageSuggester()
+        return suggester.copy_icon_to_connections(logo_choice)
+    
+    return None
+
 def handle_logo_upload(file):
     """Handle logo file upload and return filename or None."""
+    if not file or file.filename == "":
+        return None
+    
+    if not allowed_file(file.filename):
+        raise ValueError("Invalid file type. Only PNG, JPG, JPEG, GIF allowed.")
+    
+    # Check file size
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    if file_length > MAX_FILE_SIZE:
+        raise ValueError("File too large. Maximum size is 2MB.")
+    file.seek(0)  # Reset file pointer
+    
+    # Generate secure filename
+    filename = secure_filename(file.filename)
+    # Add timestamp to avoid conflicts
+    import time
+    filename = f"{int(time.time())}_{filename}"
+    
+    # Create upload directory if it does not exist
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    
+    # Save file
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(file_path)
+    
+    return filename
     if not file or file.filename == "":
         return None
     
@@ -220,10 +262,22 @@ def add_connection():
         return jsonify({"error": f"Invalid connection type. Must be one of: {", ".join(valid_types)}"}), 400
     
     try:
-        # Handle logo upload
-        logo_filename = None
-        if logo_file:
-            logo_filename = handle_logo_upload(logo_file)
+        # Handle logo selection (from apps_icons) or upload
+        
+        # Auto-suggest icon if none provided
+        if not logo_filename:
+            from ..utils.image_suggester import ImageSuggester
+            suggester = ImageSuggester()
+            suggested_icon = suggester.suggest_image(
+                data["name"], 
+                data.get("description", ""), 
+                data["target"], 
+                data["connection_type"]
+            )
+            if suggested_icon:
+                logo_filename = suggester.copy_icon_to_connections(suggested_icon)
+        logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
+        logo_filename = handle_logo_selection(logo_choice, logo_file)
         
         connection = Connection(
             name=data["name"],
@@ -266,16 +320,22 @@ def update_connection(connection_id):
         return jsonify({"error": "No data provided"}), 400
     
     try:
-        # Handle logo upload (if provided)
-        if logo_file:
-            # Delete old logo file if it exists
-            if connection.logo_filename:
-                old_file_path = os.path.join(UPLOAD_FOLDER, connection.logo_filename)
-                if os.path.exists(old_file_path):
-                    os.remove(old_file_path)
-            
-            # Upload new logo
-            connection.logo_filename = handle_logo_upload(logo_file)
+        # Handle logo selection (from apps_icons) or upload
+        
+        # Auto-suggest icon if none provided
+        if not logo_filename:
+            from ..utils.image_suggester import ImageSuggester
+            suggester = ImageSuggester()
+            suggested_icon = suggester.suggest_image(
+                data["name"], 
+                data.get("description", ""), 
+                data["target"], 
+                data["connection_type"]
+            )
+            if suggested_icon:
+                logo_filename = suggester.copy_icon_to_connections(suggested_icon)
+        logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
+        logo_filename = handle_logo_selection(logo_choice, logo_file)
         
         # Update allowed fields
         updateable_fields = ["connection_type", "name", "description", "target", "port", "timeout", "check_interval", "is_active"]
@@ -324,3 +384,84 @@ def get_connection(connection_id):
     """Get a single connection by ID."""
     connection = Connection.query.get_or_404(connection_id)
     return jsonify(connection.to_dict())
+
+@bp.route('/images/suggest')
+@login_required
+def suggest_image():
+    """Suggest an image based on connection details."""
+    name = request.args.get('name', '')
+    description = request.args.get('description', '')
+    target = request.args.get('target', '')
+    connection_type = request.args.get('connection_type', '')
+    
+    from ..utils.image_suggester import ImageSuggester
+    
+    suggester = ImageSuggester()
+    suggestion = suggester.suggest_image(name, description, target, connection_type)
+    
+    return jsonify({
+        'suggested_image': suggestion,
+        'message': f'Found suggestion: {suggestion}' if suggestion else 'No suitable suggestion found'
+    })
+
+
+@bp.route('/images/search')
+@login_required
+def search_images():
+    """Search for images based on query."""
+    query = request.args.get('q', '')
+    limit = int(request.args.get('limit', 20))
+    
+    from ..utils.image_suggester import ImageSuggester
+    
+    suggester = ImageSuggester()
+    if query:
+        results = suggester.search_icons(query, limit)
+    else:
+        # Return all available icons if no query
+        all_icons = suggester.get_available_icons()
+        results = [icon['filename'] for icon in all_icons[:limit]]
+    
+    return jsonify({
+        'results': results,
+        'total': len(results)
+    })
+
+
+@bp.route('/images/available')
+@login_required
+def get_available_images():
+    """Get all available app icons."""
+    from ..utils.image_suggester import ImageSuggester
+    
+    suggester = ImageSuggester()
+    available_icons = suggester.get_available_icons()
+    
+    return jsonify({
+        'icons': available_icons,
+        'total': len(available_icons)
+    })
+
+
+@bp.route('/admin/cleanup-images', methods=['POST'])
+@login_required
+def cleanup_unused_images():
+    """Clean up unused images in connections directory."""
+    # This should probably have admin role check in a real app
+    from ..utils.image_suggester import ImageSuggester
+    
+    # Get all currently used logo filenames
+    used_filenames = []
+    connections = Connection.query.filter(Connection.logo_filename.isnot(None)).all()
+    for conn in connections:
+        if conn.logo_filename:
+            used_filenames.append(conn.logo_filename)
+    
+    # Cleanup unused files
+    suggester = ImageSuggester()
+    cleaned_count = suggester.cleanup_unused_connection_images(used_filenames)
+    
+    return jsonify({
+        'message': f'Cleaned up {cleaned_count} unused image files',
+        'cleaned_count': cleaned_count
+    })

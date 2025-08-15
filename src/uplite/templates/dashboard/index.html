@@ -156,7 +156,8 @@
 
 .connection-name {
     font-weight: 600;
-    font-size: 1.3rem;
+    font-size: 2rem !important;
+    color: white !important;
     color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
@@ -168,7 +169,8 @@
 
 .connection-description {
     color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1.5rem !important;
+    color: black !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -572,8 +574,8 @@ function renderConnectionMonitor(data) {
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>
                 <div class="connection-column connection-info">
-                    <div class="connection-name">${conn.name}</div>
-                    <div class="connection-description">${conn.description || conn.target}</div>
+                    <div class="connection-name" style="font-size: 1.4rem !important; font-weight: 600 !important;">${conn.name}</div>
+                    <div class="connection-description" style="font-size: 1.1rem !important; line-height: 1.4 !important;">${conn.description || conn.target}</div>
                 </div>
                 <div class="connection-column connection-chart">
                     <div class="ping-chart-container">${generateChart(conn)}</div>
@@ -650,3 +652,13 @@ function renderConnectionMonitor(data) {
 </style>
 
 {% endblock %}
+/* FINAL OVERRIDE - Must be last! */
+.connection-name {
+    font-size: 2rem !important;
+    color: white !important;
+}
+.connection-description {
+    font-size: 1.5rem !important;
+    color: black !important;
+}
+/* Cache bust: 1755262468 */

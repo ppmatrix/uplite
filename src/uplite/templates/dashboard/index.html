@@ -439,7 +439,7 @@ function renderConnectionMonitor(data) {
     }
     
     if (!data.connections || data.connections.length === 0) {
-        widgetBody.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
+        widgetBody.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
         return;
     }
     

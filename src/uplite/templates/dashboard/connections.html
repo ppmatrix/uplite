@@ -139,11 +139,54 @@
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <input type="text" class="form-control" name="description">
-                    <div class="mb-3">
-                        <label class="form-label">Connection Logo</label>
-                        <input type="file" class="form-control" name="logo" accept="image/*">
-                        <small class="text-muted">Upload a logo for visual identification (PNG, JPG, GIF - max 2MB)</small>
                     </div>
+
+                    <!-- Enhanced Image Selection System -->
+                    <div class="image-selection-container">
+                        <h6><i class="bi bi-image"></i> Connection Image</h6>
+                        
+                        <!-- Suggestion Section (initially hidden) -->
+                        <div class="suggestion-section" id="suggestion-section" style="display: none;">
+                            <!-- Content populated by JavaScript -->
+                        </div>
+
+                        <!-- Browse Icons Section -->
+                        <div class="browse-icons-section">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="image_option" id="browse_icons" value="browse">
+                                <label class="form-check-label" for="browse_icons">
+                                    <i class="bi bi-grid-3x3-gap"></i> Choose from available icons
+                                </label>
+                            </div>
+                            <div class="icon-browser" id="icon-browser" style="display: none;">
+                                <div class="search-box">
+                                    <input type="text" class="form-control form-control-sm" id="icon-search" 
+                                           placeholder="Search icons... (e.g., docker, nginx, mysql)">
+                                </div>
+                                <div class="icon-grid" id="icon-grid">
+                                    <!-- Icons populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload Custom Image Section -->
+                        <div class="upload-section">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="image_option" id="upload_custom" value="upload">
+                                <label class="form-check-label" for="upload_custom">
+                                    <i class="bi bi-upload"></i> Upload custom image
+                                </label>
+                            </div>
+                            <div class="upload-input" id="upload-input" style="display: none;">
+                                <input type="file" class="form-control" name="logo" accept="image/*">
+                                <small class="form-text text-muted">PNG, JPG, GIF up to 2MB</small>
+                            </div>
+                        </div>
+
+                        <!-- Hidden field for selected icon -->
+                        <input type="hidden" name="logo_choice" id="logo_choice">
+                    </div>
+
                     <div class="row">
                         <div class="col-md-8">
                             <div class="mb-3">
@@ -185,6 +228,9 @@
 {% endblock %}
 
 {% block scripts %}
+<!-- Include the image selector JavaScript -->
+<script src="{{ url_for('static', filename='js/image-selector.js') }}"></script>
+
 <script>
 // Simple, working JavaScript functions
 
@@ -236,8 +282,8 @@ function editConnection(connectionId) {
     })
     .then(response => response.json())
     .then(data => {
-        // Create a simple overlay edit form
-        createEditOverlay(data);
+        // Create an enhanced edit overlay with image selection
+        createEnhancedEditOverlay(data);
         
         // Reset button
         button.innerHTML = originalText;
@@ -253,7 +299,7 @@ function editConnection(connectionId) {
     });
 }
 
-function createEditOverlay(data) {
+function createEnhancedEditOverlay(data) {
     // Remove any existing overlay
     const existingOverlay = document.getElementById("editOverlay");
     if (existingOverlay) {
@@ -290,7 +336,7 @@ function createEditOverlay(data) {
     
     formContainer.innerHTML = `
         <h5>Edit Connection</h5>
-        <form id="simpleEditForm">
+        <form id="enhancedEditForm">
             <input type="hidden" id="editId" value="${data.id}">
             <div class="mb-3">
                 <label class="form-label">Connection Name *</label>
@@ -304,11 +350,28 @@ function createEditOverlay(data) {
                 <label class="form-label">Target *</label>
                 <input type="text" class="form-control" id="editTarget" value="${data.target}" required>
             </div>
+            
+            <!-- Simplified image selection for edit form -->
             <div class="mb-3">
-                <label class="form-label">Logo</label>
-                <input type="file" class="form-control" id="editLogo" accept="image/*">
-                <small class="text-muted">Leave empty to keep current logo</small>
+                <label class="form-label">Image Options</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="edit_image_option" id="edit_keep_current" value="keep" checked>
+                    <label class="form-check-label" for="edit_keep_current">
+                        Keep current image
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="edit_image_option" id="edit_upload_new" value="upload">
+                    <label class="form-check-label" for="edit_upload_new">
+                        Upload new image
+                    </label>
+                </div>
+                <div id="edit_upload_section" style="display: none; margin-top: 0.5rem;">
+                    <input type="file" class="form-control" id="editLogo" accept="image/*">
+                    <small class="text-muted">Leave empty to keep current image</small>
+                </div>
             </div>
+            
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-warning">Update</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditOverlay()">Cancel</button>
@@ -320,9 +383,21 @@ function createEditOverlay(data) {
     document.body.appendChild(overlay);
     
     // Add form handler
-    document.getElementById("simpleEditForm").addEventListener("submit", function(e) {
+    document.getElementById("enhancedEditForm").addEventListener("submit", function(e) {
         e.preventDefault();
         submitEditForm(data.id);
+    });
+    
+    // Handle image option changes for edit form
+    document.querySelectorAll('input[name="edit_image_option"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const uploadSection = document.getElementById('edit_upload_section');
+            if (this.value === 'upload') {
+                uploadSection.style.display = 'block';
+            } else {
+                uploadSection.style.display = 'none';
+            }
+        });
     });
     
     // Close on overlay click
@@ -347,7 +422,9 @@ function submitEditForm(connectionId) {
     formData.append("target", document.getElementById("editTarget").value);
     
     const logoFile = document.getElementById("editLogo").files[0];
-    if (logoFile) {
+    const imageOption = document.querySelector('input[name="edit_image_option"]:checked').value;
+    
+    if (imageOption === 'upload' && logoFile) {
         formData.append("logo", logoFile);
     }
     
@@ -438,6 +515,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         alert("Connection added successfully");
                     }
                     
+                    // Reset the image selector
+                    if (window.addConnectionImageSelector) {
+                        window.addConnectionImageSelector.reset();
+                    }
+                    
                     // Close modal and refresh
                     const modal = bootstrap.Modal.getInstance(document.getElementById("addConnectionModal"));
                     if (modal) modal.hide();
@@ -450,58 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     UpLite.notify.error("Failed to add connection");
                 } else {
                     alert("Failed to add connection");
-                }
-            });
-        });
-    }
-    // Edit connection form
-    const editForm = document.getElementById('editConnectionForm');
-    if (editForm) {
-        editForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            console.log("Form fields:", Array.from(formData.entries()));
-            // For file uploads, handle FormData properly
-            const connectionId = formData.get("id");
-            formData.delete("id");
-            
-            // Convert empty strings to null for non-file fields
-            if (!formData.get("port")) formData.delete("port");
-            if (!formData.get("description")) formData.delete("description");
-            formData.set("is_active", document.getElementById("editIsActive").checked);
-            
-            fetch("/api/connections/" + connectionId, {
-                method: "PUT",
-                credentials: "same-origin",
-                body: formData  // Send FormData directly for file upload support
-            })
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                        UpLite.notify.error(data.error);
-                    } else {
-                        alert(data.error);
-                    }
-                } else {
-                    if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                        UpLite.notify.success('Connection updated successfully');
-                    } else {
-                        alert('Connection updated successfully');
-                    }
-                    modal.hide();
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                if (typeof UpLite !== 'undefined' && UpLite.notify) {
-                    UpLite.notify.error('Failed to update connection');
-                } else {
-                    alert('Failed to update connection');
                 }
             });
         });

@@ -66,33 +66,6 @@ def handle_logo_upload(file):
     file.save(file_path)
     
     return filename
-    if not file or file.filename == "":
-        return None
-    
-    if not allowed_file(file.filename):
-        raise ValueError("Invalid file type. Only PNG, JPG, JPEG, GIF allowed.")
-    
-    # Check file size
-    file.seek(0, os.SEEK_END)
-    file_length = file.tell()
-    if file_length > MAX_FILE_SIZE:
-        raise ValueError("File too large. Maximum size is 2MB.")
-    file.seek(0)  # Reset file pointer
-    
-    # Generate secure filename
-    filename = secure_filename(file.filename)
-    # Add timestamp to avoid conflicts
-    import time
-    filename = f"{int(time.time())}_{filename}"
-    
-    # Create upload directory if it does not exist
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    
-    # Save file
-    file_path = os.path.join(UPLOAD_FOLDER, filename)
-    file.save(file_path)
-    
-    return filename
 
 bp = Blueprint('api', __name__)
 
@@ -263,6 +236,8 @@ def add_connection():
     
     try:
         # Handle logo selection (from apps_icons) or upload
+        logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
+        logo_filename = handle_logo_selection(logo_choice, logo_file)
         
         # Auto-suggest icon if none provided
         if not logo_filename:
@@ -276,8 +251,6 @@ def add_connection():
             )
             if suggested_icon:
                 logo_filename = suggester.copy_icon_to_connections(suggested_icon)
-        logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
-        logo_filename = handle_logo_selection(logo_choice, logo_file)
         
         connection = Connection(
             name=data["name"],
@@ -321,21 +294,9 @@ def update_connection(connection_id):
     
     try:
         # Handle logo selection (from apps_icons) or upload
-        
-        # Auto-suggest icon if none provided
-        if not logo_filename:
-            from ..utils.image_suggester import ImageSuggester
-            suggester = ImageSuggester()
-            suggested_icon = suggester.suggest_image(
-                data["name"], 
-                data.get("description", ""), 
-                data["target"], 
-                data["connection_type"]
-            )
-            if suggested_icon:
-                logo_filename = suggester.copy_icon_to_connections(suggested_icon)
         logo_choice = data.get("logo_choice") or request.form.get("logo_choice")
         logo_filename = handle_logo_selection(logo_choice, logo_file)
+        
         
         # Update allowed fields
         updateable_fields = ["connection_type", "name", "description", "target", "port", "timeout", "check_interval", "is_active"]
@@ -441,6 +402,7 @@ def get_available_images():
         'icons': available_icons,
         'total': len(available_icons)
     })
+
 
 
 @bp.route('/admin/cleanup-images', methods=['POST'])

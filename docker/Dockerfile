@@ -27,8 +27,9 @@ COPY src/ ./src/
 # Install Python dependencies with PostgreSQL and Redis support
 RUN uv sync --frozen --no-dev --extra postgres --extra redis
 
-# Copy remaining files
+# Copy remaining files including management scripts
 COPY .env* ./
+COPY manage.py ./
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash uplite && \

@@ -1,4 +1,4 @@
-<!-- Dashboard Template - Updated: 2025-08-14 00:37 -->
+<!-- Dashboard Template - Updated: 2025-08-16 15:35 -->
 {% extends "base.html" %}
 
 {% block title %}Dashboard - UpLite{% endblock %}
@@ -33,11 +33,48 @@
     transition: background-color 0.3s ease;
 }
 
+/* System Status Widget Styles */
+.system-metric {
+    margin-bottom: 1rem;
+}
+
+.system-metric-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.system-metric-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.system-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.system-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.system-info-card {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Connection Monitor Styles (existing) */
 .connection-summary {
     margin-bottom: 25px;
 }
 
-/* 5-Column Connection Layout */
 .connection-item {
     display: flex;
     align-items: center;
@@ -61,16 +98,12 @@
     height: 100%;
 }
 
-/* Base connection column styling */
 .connection-column {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-
-
-/* Column 1: Logo */
 .connection-logo {
     width: 40px;
     justify-content: center;
@@ -78,7 +111,6 @@
     margin-right: 8px;
 }
 
-/* Column 2: Connection Info */
 .connection-info {
     flex: 1;
     min-width: 100px;
@@ -88,7 +120,6 @@
     justify-content: center;
 }
 
-/* Column 3: Chart */
 .connection-chart {
     width: 75px;
     justify-content: center;
@@ -96,18 +127,13 @@
     margin: 0 4px;
 }
 
-/* Column 4: Time Badge */
-
-/* Column 5: Link Icon */
-.connection-link {
-    width: 35px;
-    justify-content: center;
-    flex-shrink: 0;
-}
 .connection-time {
     width: 55px;
     justify-content: center;
-/* Column 5: External Link */
+    flex-shrink: 0;
+    margin-left: 6px;
+}
+
 .connection-link {
     width: 18px;
     justify-content: center;
@@ -130,14 +156,6 @@
     padding-right: 15px;
 }
 
-
-}
-
-    background: rgba(220, 53, 69, 0.1);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
-}
-}
-
 .non-clickable {
     cursor: default !important;
 }
@@ -149,15 +167,9 @@
     box-shadow: none !important;
 }
 
-}
-
-/* Connection Info */
-.connection-info {
-
 .connection-name {
     font-weight: 600;
-    font-size: 2rem !important;
-    color: white !important;
+    font-size: 1rem;
     color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
@@ -169,8 +181,7 @@
 
 .connection-description {
     color: var(--text-muted);
-    font-size: 1.5rem !important;
-    color: black !important;
+    font-size: 0.8rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -180,7 +191,6 @@
     transition: color 0.3s ease;
 }
 
-/* Scrolling line chart */
 .ping-chart-container {
     display: flex;
     align-items: center;
@@ -206,13 +216,6 @@
     filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1));
 }
 
-/* Response time display */
-/* Response time display */
-.response-time-display {
-    /* Remove custom styling to use Bootstrap badge defaults */
-    /* This will match the summary badges exactly */
-}
-
 .clean-dashboard-title {
     color: var(--text-color);
     font-weight: 600;
@@ -233,12 +236,11 @@
     transition: opacity 0.3s ease;
 }
 
-
 .non-clickable .external-link-icon {
     display: none;
 }
 
-/* Responsive adjustments for connection items */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .connection-item {
         min-height: 60px;
@@ -267,12 +269,21 @@
         max-width: 50%;
     }
 }
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="clean-dashboard-title"><i class="bi bi-activity"></i> Connection Monitoring</h1>
+    <h1 class="clean-dashboard-title"><i class="bi bi-speedometer2"></i> Dashboard</h1>
     <button id="refresh-dashboard" class="btn btn-outline-primary refresh-btn">
         <i class="bi bi-arrow-clockwise"></i> Refresh
     </button>
@@ -281,14 +292,17 @@
 <div class="row" id="dashboard-widgets">
     {% for widget_config in widget_configs %}
     <div class="col-12 widget-container">
-        <div class="widget widget-{{ widget_config.widget_type }}">
-            
+        <div class="widget widget-{{ widget_config.widget_type }}" data-widget-id="{{ widget_config.id }}" data-widget-type="{{ widget_config.widget_type }}">
+            <div class="widget-header">
+                <i class="bi bi-{% if widget_config.widget_type == 'system_status' %}cpu{% elif widget_config.widget_type == 'connection_monitor' %}activity{% elif widget_config.widget_type == 'service_status' %}hdd-network{% elif widget_config.widget_type == 'logs_viewer' %}journal-text{% else %}puzzle{% endif %}"></i>
+                {{ widget_config.widget_title or widget_config.widget_type.replace('_', ' ').title() }}
+            </div>
             <div class="widget-body" id="widget-{{ widget_config.id }}-body">
                 <div class="text-center">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-3">Loading connection status...</p>
+                    <p class="mt-3">Loading {% if widget_config.widget_type == 'system_status' %}system status{% elif widget_config.widget_type == 'connection_monitor' %}connection status{% elif widget_config.widget_type == 'service_status' %}service status{% elif widget_config.widget_type == 'logs_viewer' %}logs{% else %}widget data{% endif %}...</p>
                 </div>
             </div>
         </div>
@@ -297,9 +311,8 @@
     <div class="col-12">
         <div class="alert alert-info">
             <i class="bi bi-info-circle"></i>
-            <strong>Clean Dashboard Setup</strong><br>
-            Your dashboard is now focused on connection monitoring. 
-            <a href="{{ url_for('dashboard.connections') }}">Manage connections</a> to customize what you monitor.
+            <strong>Welcome to UpLite Dashboard</strong><br>
+            Your dashboard is ready! Visit the <a href="{{ url_for('dashboard.widgets') }}" class="alert-link"><i class="bi bi-puzzle"></i> Widgets page</a> to add widgets and customize your experience.
         </div>
     </div>
     {% endfor %}
@@ -330,21 +343,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadAllWidgets() {
-    const widgets = document.querySelectorAll('[id^="widget-"][id$="-body"]');
+    const widgets = document.querySelectorAll('.widget[data-widget-id]');
     const promises = [];
     
     widgets.forEach(widget => {
-        const widgetId = widget.id.match(/widget-(\d+)-body/)[1];
-        promises.push(loadWidgetData());
+        const widgetId = widget.getAttribute('data-widget-id');
+        const widgetType = widget.getAttribute('data-widget-type');
+        promises.push(loadWidgetData(widgetId, widgetType));
     });
     
     return Promise.all(promises);
 }
 
-function loadWidgetData() {
-    const widgetBody = document.querySelector("[id$='-body']");
+function loadWidgetData(widgetId, widgetType) {
+    const widgetBody = document.getElementById(`widget-${widgetId}-body`);
     
-    return fetch(`/api/dashboard/refresh`)
+    return fetch(`/api/widgets/${widgetId}/data`)
         .then(response => {
             if (response.status === 401 || response.status === 403) {
                 throw new Error("Authentication required - please refresh the page and login");
@@ -358,93 +372,124 @@ function loadWidgetData() {
             if (data.error) {
                 widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
             } else {
-                renderConnectionMonitor(data);
+                renderWidget(widgetType, data, widgetBody);
             }
         })
         .catch(error => {
-            console.error("❌ Error loading connection data:", error);
-            widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load connection data: ${error.message}</div>`;
-            console.error('Widget load error:', error);
+            console.error(`❌ Error loading ${widgetType} widget:`, error);
+            widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load widget data: ${error.message}</div>`;
         });
 }
 
-function isClickableUrl(url) {
-    if (!url) return false;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-        return true;
+function renderWidget(widgetType, data, container) {
+    switch (widgetType) {
+        case 'system_status':
+            renderSystemStatus(data, container);
+            break;
+        case 'connection_monitor':
+            renderConnectionMonitor(data, container);
+            break;
+        case 'service_status':
+            renderServiceStatus(data, container);
+            break;
+        case 'logs_viewer':
+            renderLogsViewer(data, container);
+            break;
+        default:
+            container.innerHTML = `<div class="alert alert-warning">Unknown widget type: ${widgetType}</div>`;
     }
-    if (/^\d+\.\d+\.\d+\.\d+$/.test(url)) {
-        return false;
-    }
-    return false;
 }
 
-function buildConnectionUrl(conn) {
-    let url = conn.target;
-    
-    // Add port if specified and not already in URL
-    if (conn.port && !url.includes(":" + conn.port)) {
-        // Check if URL already has protocol
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-            // Parse URL to add port correctly
-            try {
-                const urlObj = new URL(url);
-                if (!urlObj.port) {  // Only add port if not already specified
-                    urlObj.port = conn.port;
-                    url = urlObj.toString();
-                }
-            } catch (e) {
-                // If URL parsing fails, fall back to simple concatenation
-                url = url + ":" + conn.port;
-            }
-        } else {
-            // No protocol, add port to hostname
-            url = url + ":" + conn.port;
-        }
+function renderSystemStatus(data, container) {
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+        return;
     }
-    
-    // Add protocol if missing
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = "https://" + url;
-    }
-    
-    return url;
+
+    const cpuStatus = data.cpu.status;
+    const memoryStatus = data.memory.status;
+    const diskStatus = data.disk.status;
+
+    const html = `
+        <div class="system-info-grid">
+            <div class="system-info-card">
+                <div class="system-metric">
+                    <div class="system-metric-header">
+                        <span class="system-metric-title"><i class="bi bi-cpu"></i> CPU Usage</span>
+                        <span class="badge bg-${cpuStatus}">${data.cpu.percent}%</span>
+                    </div>
+                    <div class="progress system-progress">
+                        <div class="progress-bar bg-${cpuStatus}" style="width: ${data.cpu.percent}%"></div>
+                    </div>
+                    <small class="text-muted">${data.cpu.count} cores available</small>
+                </div>
+            </div>
+            
+            <div class="system-info-card">
+                <div class="system-metric">
+                    <div class="system-metric-header">
+                        <span class="system-metric-title"><i class="bi bi-memory"></i> Memory Usage</span>
+                        <span class="badge bg-${memoryStatus}">${data.memory.percent}%</span>
+                    </div>
+                    <div class="progress system-progress">
+                        <div class="progress-bar bg-${memoryStatus}" style="width: ${data.memory.percent}%"></div>
+                    </div>
+                    <small class="text-muted">${data.memory.used_gb}GB / ${data.memory.total_gb}GB used</small>
+                </div>
+            </div>
+            
+            <div class="system-info-card">
+                <div class="system-metric">
+                    <div class="system-metric-header">
+                        <span class="system-metric-title"><i class="bi bi-hdd"></i> Disk Usage</span>
+                        <span class="badge bg-${diskStatus}">${data.disk.percent}%</span>
+                    </div>
+                    <div class="progress system-progress">
+                        <div class="progress-bar bg-${diskStatus}" style="width: ${data.disk.percent}%"></div>
+                    </div>
+                    <small class="text-muted">${data.disk.used_gb}GB / ${data.disk.total_gb}GB used</small>
+                </div>
+            </div>
+            
+            <div class="system-info-card">
+                <div class="system-metric">
+                    <div class="system-metric-header">
+                        <span class="system-metric-title"><i class="bi bi-clock"></i> System Info</span>
+                        <span class="badge bg-info">${data.system.platform}</span>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted d-block">Uptime: ${data.system.uptime_days}d ${data.system.uptime_hours}h ${data.system.uptime_minutes}m</small>
+                        <small class="text-muted d-block">Boot: ${data.system.boot_time}</small>
+                        <small class="text-muted d-block">Release: ${data.system.release}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-end mt-3">
+            <small class="text-muted">
+                <i class="bi bi-clock"></i> 
+                Updated ${new Date(data.timestamp).toLocaleTimeString()}
+            </small>
+        </div>
+    `;
+
+    container.innerHTML = html;
 }
 
-function makeConnectionClickable(element, url, connectionName) {
-    if (!isClickableUrl(url)) {
-        element.classList.add('non-clickable');
+function renderConnectionMonitor(data, container) {
+    // Existing connection monitor rendering logic
+    if (!data || !data.connections) {
+        container.innerHTML = '<div class="alert alert-warning">No connection data available</div>';
         return;
     }
-    
-    element.addEventListener('click', function(e) {
-        e.preventDefault();
-        window.open(url, '_blank', 'noopener,noreferrer');
-    });
-}
 
-function renderConnectionMonitor(data) {
-    
-    const widgetBody = document.querySelector('[id^="widget-"][id$="-body"]');
-    
-    if (!widgetBody) {
-        console.error("❌ Widget body element not found!");
+    if (data.connections.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
         return;
     }
     
-    if (!data) {
-        console.error("❌ No data provided to renderConnectionMonitor");
-        widgetBody.innerHTML = '<div class="alert alert-danger">No data received from API</div>';
-        return;
-    }
-    
-    if (!data.connections || data.connections.length === 0) {
-        widgetBody.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
-        return;
-    }
-    
-    
-    // Generate summary section from connection data
+    // Generate summary section
     const upCount = data.connections.filter(conn => conn.last_status === 'up').length;
     const downCount = data.connections.filter(conn => conn.last_status === 'down').length;
     const totalCount = data.connections.length;
@@ -464,7 +509,6 @@ function renderConnectionMonitor(data) {
                             <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
                             <span class="badge bg-success me-2">Up: ${upCount}</span>
                             ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
-                            ${data.connections.filter(conn => conn.last_status === 'unknown').length > 0 ? `<span class="badge bg-warning me-2">Unknown: ${data.connections.filter(conn => conn.last_status === 'unknown').length}</span>` : ''}
                         </small>
                     </div>
                 </div>
@@ -478,187 +522,298 @@ function renderConnectionMonitor(data) {
         </div>
     `;
     
-    // Generate connections list
+    // Generate connections list (simplified version)
     let connectionsHtml = '<div class="connections-list row">';
     
-    // Debug: Log full API response
-    console.log("Full API response:", data);
-    console.log("Connections array:", data.connections);
-    console.log("Number of connections:", data.connections ? data.connections.length : 0);
-    
-    if (!data.connections || data.connections.length === 0) {
-        console.error("❌ No connections in API response!");
-        widgetBody.innerHTML = '<div class="alert alert-warning">No connections found in API response</div>';
-        return;
-    }
-    
-    
-    
-    // Generate sample historical data as fallback when no real data available
-    function generateSampleHistory(conn) {
-        const baseTime = conn.median_response_time || conn.last_response_time || 100;
-        const variance = baseTime * 0.3; // 30% variance
-        const history = [];
-        
-        for (let i = 0; i < 20; i++) {
-            const time = baseTime + (Math.random() - 0.5) * variance;
-            const status = Math.random() > 0.1 ? 'up' : 'down'; // 90% uptime
-            history.push({
-                timestamp: Date.now() - (20 - i) * 60000, // 1 minute intervals
-                last_response_time: Math.max(1, time),
-                status: status
-            });
-        }
-        return history;
-    }
-    
-    // Create ultra-minimal SVG line chart
-    function createSVGChart(history, currentStatus) {
-        const width = 80;
-        const height = 20;
-        
-        // Handle both real history data and sample data formats
-        const validData = history.filter(h => {
-            const responseTime = h.response_time || h.last_response_time;
-            const status = h.status;
-            return responseTime && status === 'up';
-        });
-        
-        if (validData.length < 2) {
-            return `<div class="no-chart-data">—</div>`;
-        }
-        
-        // Use full SVG space - no padding
-        const responseTimes = validData.map(h => h.response_time || h.last_response_time);
-        const minTime = Math.min(...responseTimes);
-        const maxTime = Math.max(...responseTimes);
-        const timeRange = maxTime - minTime || 1;
-        
-        // Generate path that fills entire SVG space
-        const pathData = validData.map((h, i) => {
-            const responseTime = h.response_time || h.last_response_time;
-            const x = (i / (validData.length - 1)) * width;
-            const y = height - ((responseTime - minTime) / timeRange) * height;
-            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
-        }).join(' ');
-        
-        // Enhanced colors for better contrast
-        const color = currentStatus === 'up' ? '#059669' : '#dc2626';
-        
-        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;background:transparent;"><path d="${pathData}" fill="none" stroke="${color}" stroke-width="1" vector-rendering="crispEdges"/></svg>`;
-    }
-
-    
-    data.connections.forEach((conn, index) => {
-        console.log(`Processing connection ${index + 1}:`, {
-            name: conn.name,
-            last_status: conn.last_status,
-            last_response_time: conn.last_response_time,
-            target: conn.target
-        });
-        const isClickable = isClickableUrl(conn.target);
+    data.connections.forEach(conn => {
         const statusClass = conn.last_status === 'up' ? 'status-up' : conn.last_status === 'down' ? 'status-down' : 'status-unknown';
-        const ledClass = `status-${conn.last_status}`;
-        
-        // Generate historical chart data
-        const generateChart = (conn) => {
-            // Use real historical data if available, fallback to sample data
-            const historyData = conn.history && conn.history.length > 0 ? conn.history : generateSampleHistory(conn);
-            return createSVGChart(historyData, conn.last_status);
-        };
         
         connectionsHtml += `
-        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
-            <div class="connection-item ${statusClass}" data-url="${buildConnectionUrl(conn)}" data-name="${conn.name}">
-                <div class="connection-column connection-logo">
-                    ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                <div class="connection-item ${statusClass}">
+                    <div class="connection-column connection-info">
+                        <div class="connection-name">${conn.name}</div>
+                        <div class="connection-description">${conn.description || conn.target}</div>
+                    </div>
+                    <div class="connection-column connection-time">
+                        ${conn.last_response_time ? 
+                            `<div class="badge bg-${conn.last_response_time < 100 ? 'success' : conn.last_response_time < 300 ? 'warning' : 'danger'}">${Math.round(conn.last_response_time)}ms</div>` : 
+                            '<div class="badge bg-secondary">N/A</div>'
+                        }
+                    </div>
                 </div>
-                <div class="connection-column connection-info">
-                    <div class="connection-name" style="font-size: 1rem !important; font-weight: 600 !important;">${conn.name}</div>
-                    <div class="connection-description" style="font-size: 0.8rem !important; line-height: 1.4 !important;">${conn.description || conn.target}</div>
+            </div>
+        `;
+    });
+    
+    connectionsHtml += '</div>';
+    
+    container.innerHTML = summaryHtml + connectionsHtml;
+}
+
+function renderServiceStatus(data, container) {
+    container.innerHTML = '<div class="alert alert-info">Service Status widget coming soon!</div>';
+}
+
+function renderLogsViewer(data, container) {
+    container.innerHTML = '<div class="alert alert-info">Logs Viewer widget coming soon!</div>';
+}
+</script>
+{% endblock %}
+
+
+<script>
+// Additional render functions for Service Status and Logs Viewer widgets
+
+function renderServiceStatus(data, container) {
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+        return;
+    }
+
+    if (!data.services || data.services.length === 0) {
+        container.innerHTML = `<div class="alert alert-info"><i class="bi bi-info-circle"></i> No services configured for monitoring</div>`;
+        return;
+    }
+
+    // Summary section
+    const summaryHtml = `
+        <div class="service-summary mb-3">
+            <div class="alert alert-${data.summary.overall_status} d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><i class="bi bi-gear"></i> Service Status</strong>
+                    <div class="mt-2">
+                        <small>
+                            <span class="badge bg-secondary me-2">Total: ${data.summary.total}</span>
+                            <span class="badge bg-success me-2">Running: ${data.summary.running}</span>
+                            ${data.summary.stopped > 0 ? `<span class="badge bg-danger me-2">Stopped: ${data.summary.stopped}</span>` : ''}
+                        </small>
+                    </div>
                 </div>
-                <div class="connection-column connection-chart">
-                    <div class="ping-chart-container">${generateChart(conn)}</div>
-                </div>
-                <div class="connection-column connection-time">
-                    ${(() => {
-                    
-                    const responseTime = conn.median_response_time || conn.last_response_time;
-                    if (!responseTime) {
-                        return '<div class="response-time-display badge bg-danger">ERR</div>';
-                    }
-                    
-                    let colorClass = 'badge bg-danger';
-                    if (responseTime < 100) {
-                        colorClass = 'badge bg-success';
-                    } else if (responseTime < 300) {
-                        colorClass = 'badge bg-warning text-dark';
-                    } else if (responseTime < 1000) {
-                        colorClass = 'badge bg-warning';
-                    }
-                    
-                    const roundedTime = Math.round(responseTime);
-                    const title = conn.median_response_time ? 'Median response time' : 'Current response time';
-                    return `<div class="response-time-display ${colorClass}" title="${title}">${roundedTime}ms</div>`;
-                })()}
-                </div>
-                <div class="connection-column connection-link">
-                    ${isClickable ? '<i class="bi bi-box-arrow-up-right external-link-icon"></i>' : '<span class="link-placeholder"></span>'}
+                <div class="text-end">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> 
+                        Updated ${new Date(data.timestamp).toLocaleTimeString()}
+                    </small>
                 </div>
             </div>
         </div>
+    `;
+
+    // Services list
+    let servicesHtml = '<div class="services-list row">';
+    data.services.forEach(service => {
+        const statusIcon = service.is_running ? 'play-circle-fill' : 'stop-circle-fill';
+        const statusText = service.is_running ? 'Running' : 'Stopped';
+        const enabledText = service.is_enabled ? 'Enabled' : 'Disabled';
+        
+        servicesHtml += `
+            <div class="col-lg-6 col-md-6 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">
+                                    <i class="bi bi-${statusIcon} text-${service.status_color} me-2"></i>
+                                    ${service.name}
+                                </h6>
+                                <div>
+                                    <span class="badge bg-${service.status_color}">${statusText}</span>
+                                    <span class="badge bg-secondary ms-1">${enabledText}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         `;
-                    
     });
+    servicesHtml += '</div>';
+
+    container.innerHTML = summaryHtml + servicesHtml;
+}
+
+function renderLogsViewer(data, container) {
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+        return;
+    }
+
+    if (!data.logs || data.logs.length === 0) {
+        container.innerHTML = `<div class="alert alert-info"><i class="bi bi-info-circle"></i> No log files available or accessible</div>`;
+        return;
+    }
+
+    // Header with summary
+    let html = `
+        <div class="logs-summary mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-journal-text"></i> Recent Log Entries</h6>
+                <div>
+                    <small class="text-muted">
+                        ${data.total_entries} entries from ${data.logs.length} sources
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Logs tabs
+    html += `<ul class="nav nav-tabs" id="logsTab" role="tablist">`;
+    data.logs.forEach((log, index) => {
+        html += `
+            <li class="nav-item" role="presentation">
+                <button class="nav-link ${index === 0 ? 'active' : ''}" 
+                        id="log-${index}-tab" 
+                        data-bs-toggle="tab" 
+                        data-bs-target="#log-${index}" 
+                        type="button" role="tab">
+                    ${log.name} (${log.count})
+                </button>
+            </li>
+        `;
+    });
+    html += `</ul>`;
+
+    // Logs content
+    html += `<div class="tab-content" id="logsTabContent">`;
+    data.logs.forEach((log, index) => {
+        html += `
+            <div class="tab-pane fade ${index === 0 ? 'show active' : ''}" 
+                 id="log-${index}" role="tabpanel">
+                <div class="log-content mt-3" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; background: #f8f9fa; padding: 1rem; border-radius: 4px;">
+        `;
+        
+        if (log.entries && log.entries.length > 0) {
+            log.entries.forEach(entry => {
+                if (entry.trim()) {
+                    html += `<div class="log-entry" style="margin-bottom: 0.25rem; word-wrap: break-word;">${escapeHtml(entry)}</div>`;
+                }
+            });
+        } else {
+            html += `<div class="text-muted">No entries available</div>`;
+        }
+        
+        html += `</div></div>`;
+    });
+    html += `</div>`;
+
+    // Update timestamp
+    html += `
+        <div class="text-end mt-3">
+            <small class="text-muted">
+                <i class="bi bi-clock"></i> 
+                Updated ${new Date(data.timestamp).toLocaleTimeString()}
+            </small>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Update the existing renderConnectionMonitor function to use the correct data structure
+function renderConnectionMonitor(data, container) {
+    // Check if this is the new widget format or the old dashboard format
+    if (data.connections) {
+        // New widget format with proper connection data
+        renderConnectionMonitorWidget(data, container);
+    } else if (data.summary && data.connections) {
+        // Widget format from connection_monitor.py
+        renderConnectionMonitorWidget(data, container);
+    } else {
+        // Fallback for old format or missing data
+        container.innerHTML = '<div class="alert alert-warning">Connection monitor data format not recognized</div>';
+    }
+}
+
+function renderConnectionMonitorWidget(data, container) {
+    if (data.error) {
+        container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+        return;
+    }
+
+    if (!data.connections || data.connections.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
+        return;
+    }
+    
+    // Use widget summary if available, otherwise calculate from connections
+    let summary = data.summary;
+    if (!summary) {
+        const totalCount = data.connections.length;
+        const upCount = data.connections.filter(conn => conn.status === 'up' || conn.last_status === 'up').length;
+        const downCount = data.connections.filter(conn => conn.status === 'down' || conn.last_status === 'down').length;
+        
+        summary = {
+            total: totalCount,
+            up: upCount,
+            down: downCount,
+            overall_status: downCount === 0 ? 'success' : (upCount === 0 ? 'danger' : 'warning'),
+            overall_message: downCount === 0 ? 'All services operational' : 
+                           upCount === 0 ? 'All services down' : 
+                           `${downCount} service${downCount > 1 ? 's' : ''} experiencing issues`
+        };
+    }
+    
+    // Summary section
+    const summaryHtml = `
+        <div class="connection-summary mb-3">
+            <div class="alert alert-${summary.overall_status} d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><i class="bi bi-hdd-network"></i> ${summary.overall_message}</strong>
+                    <div class="mt-2">
+                        <small>
+                            <span class="badge bg-secondary me-2">Total: ${summary.total}</span>
+                            <span class="badge bg-success me-2">Up: ${summary.up}</span>
+                            ${summary.down > 0 ? `<span class="badge bg-danger me-2">Down: ${summary.down}</span>` : ''}
+                            ${summary.unknown > 0 ? `<span class="badge bg-warning me-2">Unknown: ${summary.unknown}</span>` : ''}
+                        </small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> 
+                        Updated ${new Date(data.timestamp).toLocaleTimeString()}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Connections list
+    let connectionsHtml = '<div class="connections-list row">';
+    
+    data.connections.forEach(conn => {
+        const status = conn.status || conn.last_status || 'unknown';
+        const responseTime = conn.response_time || conn.last_response_time || conn.median_response_time;
+        const statusClass = status === 'up' ? 'status-up' : status === 'down' ? 'status-down' : 'status-unknown';
+        
+        connectionsHtml += `
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+                <div class="connection-item ${statusClass}">
+                    <div class="connection-column connection-info">
+                        <div class="connection-name">${conn.name}</div>
+                        <div class="connection-description">${conn.description || conn.target}</div>
+                    </div>
+                    <div class="connection-column connection-time">
+                        ${responseTime ? 
+                            `<div class="badge bg-${responseTime < 100 ? 'success' : responseTime < 300 ? 'warning' : 'danger'}">${Math.round(responseTime)}ms</div>` : 
+                            '<div class="badge bg-secondary">N/A</div>'
+                        }
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
     connectionsHtml += '</div>';
     
-    widgetBody.innerHTML = summaryHtml + connectionsHtml;
-    
-    // Add click handlers to clickable connections
-    const connectionItems = widgetBody.querySelectorAll('.connection-item');
-    connectionItems.forEach(item => {
-        const url = item.dataset.url;
-        const name = item.dataset.name;
-        makeConnectionClickable(item, url, name);
-    });
+    container.innerHTML = summaryHtml + connectionsHtml;
 }
 </script>
-
-<style>
-.spin {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Responsive adjustments for connection items */
-@media (max-width: 768px) {
-    .connection-item {
-        min-height: 60px;
-        padding: 10px 15px;
-    }
-    
-    .connection-name {
-        font-size: 1.1rem;
-    }
-    
-    .connection-description {
-        font-size: 1.0rem;
-    }
-}
-</style>
-
-{% endblock %}
-/* FINAL OVERRIDE - Must be last! */
-.connection-name {
-    font-size: 2rem !important;
-    color: white !important;
-}
-.connection-description {
-    font-size: 1.5rem !important;
-    color: black !important;
-}
-/* Cache bust: 1755262468 */

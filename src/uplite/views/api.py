@@ -313,9 +313,9 @@ def update_connection(connection_id):
                 # Convert string boolean values
                 if field == "is_active":
                     value = value in ["true", "True", True, "1", 1]
-                # Convert port to int if provided
-                elif field == "port" and value:
-                    value = int(value)
+                # Convert port to int if provided, or None if empty
+                elif field == "port":
+                    value = int(value) if value else None
                 # Convert timeout and check_interval to int
                 elif field in ["timeout", "check_interval"] and value:
                     value = int(value)
@@ -442,3 +442,222 @@ def cleanup_unused_images():
         'message': f'Cleaned up {cleaned_count} unused image files',
         'cleaned_count': cleaned_count
     })
+
+
+# Widget Management API Endpoints
+
+@bp.route('/widgets', methods=['POST'])
+@login_required
+def create_widget():
+    """Create a new widget configuration."""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    required_fields = ["widget_type"]
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({"error": f"Missing required field: {field}"}), 400
+    
+    # Validate widget type exists
+    from ..widgets.widget_manager import WidgetManager
+    available_widgets = {w['type']: w for w in WidgetManager.get_available_widgets()}
+    
+    if data["widget_type"] not in available_widgets:
+        return jsonify({"error": f"Invalid widget type: {data['widget_type']}"}), 400
+    
+    try:
+        # Get the next position for this user
+        max_position = db.session.query(db.func.max(WidgetConfig.position)).filter_by(
+            user_id=current_user.id
+        ).scalar() or -1
+        
+        # Create widget title if not provided
+        widget_title = data.get("widget_title")
+        if not widget_title or not widget_title.strip():
+            widget_title = available_widgets[data["widget_type"]]["display_name"]
+        
+        widget = WidgetConfig(
+            user_id=current_user.id,
+            widget_type=data["widget_type"],
+            widget_title=widget_title.strip(),
+            position=max_position + 1,
+            is_enabled=True,
+            config=data.get("config", {})
+        )
+        
+        db.session.add(widget)
+        db.session.commit()
+        
+        return jsonify(widget.to_dict()), 201
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/widgets/<int:widget_id>/toggle', methods=['POST'])
+@login_required
+def toggle_widget(widget_id):
+    """Toggle widget enabled/disabled status."""
+    widget = WidgetConfig.query.filter_by(
+        id=widget_id,
+        user_id=current_user.id
+    ).first_or_404()
+    
+    try:
+        widget.is_enabled = not widget.is_enabled
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Widget {'enabled' if widget.is_enabled else 'disabled'} successfully",
+            "is_enabled": widget.is_enabled,
+            "widget": widget.to_dict()
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/widgets/<int:widget_id>', methods=['DELETE'])
+@login_required
+def delete_widget(widget_id):
+    """Delete a widget configuration."""
+    widget = WidgetConfig.query.filter_by(
+        id=widget_id,
+        user_id=current_user.id
+    ).first_or_404()
+    
+    try:
+        db.session.delete(widget)
+        
+        # Reorder remaining widgets to fill gaps
+        remaining_widgets = WidgetConfig.query.filter_by(
+            user_id=current_user.id
+        ).filter(
+            WidgetConfig.position > widget.position
+        ).order_by(WidgetConfig.position).all()
+        
+        for w in remaining_widgets:
+            w.position -= 1
+        
+        db.session.commit()
+        
+        return jsonify({"message": "Widget deleted successfully"})
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/widgets/<int:widget_id>/edit', methods=['PUT'])
+@login_required
+def edit_widget(widget_id):
+    """Edit a widget configuration."""
+    widget = WidgetConfig.query.filter_by(
+        id=widget_id,
+        user_id=current_user.id
+    ).first_or_404()
+    
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    try:
+        # Update allowed fields
+        if "widget_title" in data:
+            widget.widget_title = data["widget_title"].strip() if data["widget_title"] else None
+        
+        if "config" in data:
+            widget.config = data["config"]
+        
+        if "position" in data:
+            old_position = widget.position
+            new_position = int(data["position"])
+            
+            # Reorder widgets if position changed
+            if old_position != new_position:
+                user_widgets = WidgetConfig.query.filter_by(user_id=current_user.id).all()
+                
+                # Simple reordering logic
+                if new_position > old_position:
+                    # Moving down - shift widgets up
+                    for w in user_widgets:
+                        if old_position < w.position <= new_position and w.id != widget.id:
+                            w.position -= 1
+                else:
+                    # Moving up - shift widgets down
+                    for w in user_widgets:
+                        if new_position <= w.position < old_position and w.id != widget.id:
+                            w.position += 1
+                
+                widget.position = new_position
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Widget updated successfully",
+            "widget": widget.to_dict()
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@bp.route('/widgets/available')
+@login_required
+def get_available_widgets():
+    """Get all available widget types."""
+    from ..widgets.widget_manager import WidgetManager
+    
+    available_widgets = WidgetManager.get_available_widgets()
+    
+    return jsonify({
+        "widgets": available_widgets,
+        "total": len(available_widgets)
+    })
+
+
+@bp.route('/widgets/reorder', methods=['POST'])
+@login_required
+def reorder_widgets():
+    """Reorder widgets based on provided widget IDs list."""
+    data = request.get_json()
+    
+    if not data or "widget_ids" not in data:
+        return jsonify({"error": "widget_ids list required"}), 400
+    
+    widget_ids = data["widget_ids"]
+    
+    if not isinstance(widget_ids, list):
+        return jsonify({"error": "widget_ids must be a list"}), 400
+    
+    try:
+        # Get all user widgets
+        user_widgets = {
+            w.id: w for w in WidgetConfig.query.filter_by(user_id=current_user.id).all()
+        }
+        
+        # Validate all widget IDs belong to current user
+        for widget_id in widget_ids:
+            if widget_id not in user_widgets:
+                return jsonify({"error": f"Widget {widget_id} not found or not owned by user"}), 400
+        
+        # Update positions
+        for position, widget_id in enumerate(widget_ids):
+            user_widgets[widget_id].position = position
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Widgets reordered successfully",
+            "widgets": [user_widgets[wid].to_dict() for wid in widget_ids]
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

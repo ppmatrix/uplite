@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+
+{% block title %}Widgets - UpLite{% endblock %}
+
+{% block head %}
+<style>
+.widget-card { 
+    margin-bottom: 1rem; 
+    transition: all 0.2s ease-in-out;
+}
+.widget-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.widget-status { font-weight: bold; }
+.status-enabled { color: #28a745; }
+.status-disabled { color: #6c757d; }
+.widget-actions { text-align: right; }
+.widget-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+.widget-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #0d6efd;
+}
+.widget-preview {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 4px solid #0d6efd;
+}
+.loading-spinner {
+    display: none;
+}
+.toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1055;
+}
+.edit-form {
+    display: none;
+}
+.sortable-widget {
+    cursor: move;
+}
+.sortable-widget:hover {
+    background-color: #f8f9fa;
+}
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    margin-right: 10px;
+}
+.drag-handle:active {
+    cursor: grabbing;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi bi-puzzle"></i> Widget Management
+    </h1>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal">
+        <i class="bi bi-plus-circle"></i> Add Widget
+    </button>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container"></div>
+
+<!-- Current Widget Configurations -->
+<div class="row mb-5">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3><i class="bi bi-gear"></i> Your Configured Widgets</h3>
+            <small class="text-muted">Drag widgets to reorder them on your dashboard</small>
+        </div>
+        <div id="widget-configs-container">
+            <div class="loading-spinner text-center" id="loading-configs">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading your widgets...</p>
+            </div>
+            <div id="widget-configs-list" class="row"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Available Widgets -->
+<div class="row">
+    <div class="col-12">
+        <h3><i class="bi bi-collection"></i> Available Widgets</h3>
+        <div id="available-widgets-container">
+            <div class="loading-spinner text-center" id="loading-available">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading available widgets...</p>
+            </div>
+            <div id="available-widgets-list" class="row"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Widget Modal -->
+<div class="modal fade" id="addWidgetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Add Widget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addWidgetForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="widgetType" class="form-label">Widget Type</label>
+                        <select class="form-select" id="widgetType" name="widget_type" required>
+                            <option value="">Select a widget type...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="widgetTitle" class="form-label">Custom Title (Optional)</label>
+                        <input type="text" class="form-control" id="widgetTitle" name="widget_title" placeholder="Leave blank for default title">
+                        <div class="form-text">If left blank, the default widget name will be used</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="addWidgetBtn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        Add Widget
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Widget Modal -->
+<div class="modal fade" id="editWidgetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Edit Widget</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editWidgetForm">
+                <input type="hidden" id="editWidgetId" name="widget_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editWidgetTitle" class="form-label">Widget Title</label>
+                        <input type="text" class="form-control" id="editWidgetTitle" name="widget_title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editWidgetPosition" class="form-label">Position</label>
+                        <input type="number" class="form-control" id="editWidgetPosition" name="position" min="0">
+                        <div class="form-text">Lower numbers appear first on the dashboard</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="editWidgetBtn">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let availableWidgets = [];
+let userWidgets = [];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadAvailableWidgets();
+    loadUserWidgets();
+    
+    // Set up form handlers
+    setupFormHandlers();
+});
+
+// Load available widgets
+async function loadAvailableWidgets() {
+    try {
+        document.getElementById('loading-available').style.display = 'block';
+        
+        const response = await fetch('/api/widgets/available');
+        const data = await response.json();
+        
+        if (response.ok) {
+            availableWidgets = data.widgets;
+            renderAvailableWidgets();
+            populateWidgetTypeSelect();
+        } else {
+            showToast('Error loading available widgets: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Failed to load available widgets: ' + error.message, 'error');
+    } finally {
+        document.getElementById('loading-available').style.display = 'none';
+    }
+}
+
+// Load user's configured widgets
+async function loadUserWidgets() {
+    try {
+        document.getElementById('loading-configs').style.display = 'block';
+        
+        const response = await fetch('/api/widgets');
+        const data = await response.json();
+        
+        if (response.ok) {
+            userWidgets = data;
+            renderUserWidgets();
+        } else {
+            showToast('Error loading your widgets: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Failed to load your widgets: ' + error.message, 'error');
+    } finally {
+        document.getElementById('loading-configs').style.display = 'none';
+    }
+}
+
+// Render available widgets
+function renderAvailableWidgets() {
+    const container = document.getElementById('available-widgets-list');
+    container.innerHTML = '';
+    
+    availableWidgets.forEach(widget => {
+        const col = document.createElement('div');
+        col.className = 'col-lg-4 col-md-6 mb-4';
+        
+        col.innerHTML = `
+            <div class="card widget-card h-100">
+                <div class="card-body text-center">
+                    <div class="widget-icon">
+                        ${getWidgetIcon(widget.type)}
+                    </div>
+                    <h5 class="card-title">${widget.display_name}</h5>
+                    <p class="card-text">${widget.description}</p>
+                    <span class="badge bg-light text-dark">${widget.type}</span>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-outline-primary btn-sm w-100" onclick="addWidget('${widget.type}', '${widget.display_name}')">
+                        <i class="bi bi-plus"></i> Add to Dashboard
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(col);
+    });
+}
+
+// Render user's configured widgets
+function renderUserWidgets() {
+    const container = document.getElementById('widget-configs-list');
+    
+    if (userWidgets.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>No widgets configured yet.</strong><br>
+                    Add some widgets below to customize your dashboard experience.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort widgets by position
+    userWidgets.sort((a, b) => a.position - b.position);
+    
+    container.innerHTML = '';
+    
+    userWidgets.forEach((widget, index) => {
+        const col = document.createElement('div');
+        col.className = 'col-lg-6 col-md-6 mb-3';
+        col.innerHTML = `
+            <div class="card widget-card sortable-widget" data-widget-id="${widget.id}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-grip-vertical drag-handle"></i>
+                                <h5 class="card-title mb-1">
+                                    <i class="bi bi-puzzle-fill text-primary me-2"></i>
+                                    ${widget.widget_title || widget.widget_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </h5>
+                            </div>
+                            <p class="card-text mb-1">
+                                <span class="badge bg-secondary widget-type-badge">${widget.widget_type}</span>
+                                <span class="widget-status ms-2">
+                                    ${widget.is_enabled ? 
+                                        '<span class="status-enabled"><i class="bi bi-check-circle"></i> Enabled</span>' : 
+                                        '<span class="status-disabled"><i class="bi bi-x-circle"></i> Disabled</span>'
+                                    }
+                                </span>
+                            </p>
+                            <p class="card-text mb-0">
+                                <small class="text-muted">Position: ${widget.position + 1}</small>
+                            </p>
+                        </div>
+                        <div class="widget-actions">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editWidget(${widget.id})" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="toggleWidget(${widget.id}, ${widget.is_enabled})" title="${widget.is_enabled ? 'Disable' : 'Enable'}">
+                                    ${widget.is_enabled ? '<i class="bi bi-pause"></i>' : '<i class="bi bi-play"></i>'}
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeWidget(${widget.id})" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(col);
+    });
+}
+
+// Get widget icon based on type
+function getWidgetIcon(type) {
+    const icons = {
+        'system_status': '<i class="bi bi-cpu"></i>',
+        'connection_monitor': '<i class="bi bi-activity"></i>',
+        'service_status': '<i class="bi bi-hdd-network"></i>',
+        'logs_viewer': '<i class="bi bi-journal-text"></i>'
+    };
+    return icons[type] || '<i class="bi bi-puzzle"></i>';
+}
+
+// Populate widget type select dropdown
+function populateWidgetTypeSelect() {
+    const select = document.getElementById('widgetType');
+    select.innerHTML = '<option value="">Select a widget type...</option>';
+    
+    availableWidgets.forEach(widget => {
+        const option = document.createElement('option');
+        option.value = widget.type;
+        option.textContent = widget.display_name;
+        select.appendChild(option);
+    });
+}
+
+// Add widget function
+function addWidget(type, displayName) {
+    document.getElementById('widgetType').value = type;
+    document.getElementById('widgetTitle').placeholder = displayName;
+    new bootstrap.Modal(document.getElementById('addWidgetModal')).show();
+}
+
+// Edit widget function
+function editWidget(widgetId) {
+    const widget = userWidgets.find(w => w.id === widgetId);
+    if (!widget) {
+        showToast('Widget not found', 'error');
+        return;
+    }
+    
+    document.getElementById('editWidgetId').value = widget.id;
+    document.getElementById('editWidgetTitle').value = widget.widget_title || '';
+    document.getElementById('editWidgetPosition').value = widget.position;
+    
+    new bootstrap.Modal(document.getElementById('editWidgetModal')).show();
+}
+
+// Toggle widget function
+async function toggleWidget(widgetId, currentStatus) {
+    const action = currentStatus ? 'disable' : 'enable';
+    
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(data.message, 'success');
+            loadUserWidgets(); // Refresh the list
+        } else {
+            showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Failed to ' + action + ' widget: ' + error.message, 'error');
+    }
+}
+
+// Remove widget function
+async function removeWidget(widgetId) {
+    if (!confirm('Are you sure you want to remove this widget? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/widgets/${widgetId}`, {
+            method: 'DELETE'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(data.message, 'success');
+            loadUserWidgets(); // Refresh the list
+        } else {
+            showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Failed to remove widget: ' + error.message, 'error');
+    }
+}
+
+// Setup form handlers
+function setupFormHandlers() {
+    // Add widget form
+    document.getElementById('addWidgetForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('addWidgetBtn');
+        const spinner = btn.querySelector('.spinner-border');
+        
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        
+        try {
+            const formData = new FormData(this);
+            const data = {
+                widget_type: formData.get('widget_type'),
+                widget_title: formData.get('widget_title') || null
+            };
+            
+            const response = await fetch('/api/widgets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showToast('Widget added successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('addWidgetModal')).hide();
+                this.reset();
+                loadUserWidgets(); // Refresh the list
+            } else {
+                showToast('Error: ' + (result.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showToast('Failed to add widget: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+        }
+    });
+    
+    // Edit widget form
+    document.getElementById('editWidgetForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.getElementById('editWidgetBtn');
+        const spinner = btn.querySelector('.spinner-border');
+        
+        btn.disabled = true;
+        spinner.classList.remove('d-none');
+        
+        try {
+            const formData = new FormData(this);
+            const widgetId = formData.get('widget_id');
+            const data = {
+                widget_title: formData.get('widget_title'),
+                position: parseInt(formData.get('position'))
+            };
+            
+            const response = await fetch(`/api/widgets/${widgetId}/edit`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showToast('Widget updated successfully!', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('editWidgetModal')).hide();
+                loadUserWidgets(); // Refresh the list
+            } else {
+                showToast('Error: ' + (result.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            showToast('Failed to update widget: ' + error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            spinner.classList.add('d-none');
+        }
+    });
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toastContainer = document.querySelector('.toast-container');
+    const toastId = 'toast-' + Date.now();
+    
+    const bgClass = {
+        'success': 'bg-success',
+        'error': 'bg-danger', 
+        'warning': 'bg-warning',
+        'info': 'bg-info'
+    }[type] || 'bg-info';
+    
+    const iconClass = {
+        'success': 'bi-check-circle',
+        'error': 'bi-exclamation-triangle',
+        'warning': 'bi-exclamation-triangle',
+        'info': 'bi-info-circle'
+    }[type] || 'bi-info-circle';
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header ${bgClass} text-white">
+                <i class="bi ${iconClass} me-2"></i>
+                <strong class="me-auto">${type.charAt(0).toUpperCase() + type.slice(1)}</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', () => {
+        toastElement.remove();
+    });
+}
+</script>
+{% endblock %}

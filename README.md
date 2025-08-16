@@ -7,6 +7,8 @@
 
 > A lightweight, configurable web dashboard for monitoring connections, system resources, and services with an intuitive widget-based interface.
 
+📖 **All documentation is contained in this README** - no external docs needed!
+
 ## ✨ Features
 
 ### 🌐 Connection Monitoring
@@ -217,7 +219,6 @@ uplite/
 │   └── templates/           # Jinja2 HTML templates
 ├── tests/                   # Test suite
 ├── docker/                  # Docker configuration
-├── docs/                    # Documentation
 └── pyproject.toml          # Project configuration
 ```
 
@@ -396,13 +397,6 @@ We welcome contributions from the community! Here's how to get started:
 
 ## 📚 Documentation
 
-- **[Installation Guide](docs/installation.md)** - Detailed setup instructions
-- **[Configuration Reference](docs/configuration.md)** - All configuration options
-- **[API Documentation](docs/api.md)** - Complete API reference
-- **[Widget Development](docs/widgets.md)** - Creating custom widgets
-- **[Deployment Guide](docs/deployment.md)** - Production deployment
-- **[Development Setup](DEVELOPMENT.md)** - Development environment setup
-- **[Monitoring Guide](MONITORING_GUIDE.md)** - Monitoring service details
 
 ## 🗺️ Roadmap
 
@@ -429,10 +423,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you need help or have questions:
 
-1. **Documentation**: Check the [docs/](docs/) directory for detailed guides
-2. **GitHub Issues**: Search existing [issues](https://github.com/ppmatrix/uplite/issues) or create a new one
-3. **Discussions**: Join the conversation in [GitHub Discussions](https://github.com/ppmatrix/uplite/discussions)
-4. **Email**: Contact the maintainers at ppmatrixcsk@gmail.com
+1. **GitHub Issues**: Search existing [issues](https://github.com/ppmatrix/uplite/issues) or create a new one
+2. **GitHub Discussions**: Join the conversation in [GitHub Discussions](https://github.com/ppmatrix/uplite/discussions)
+3. **Email Support**: Contact the maintainers at ppmatrixcsk@gmail.com
+
 
 ## 🏷️ Changelog
 
@@ -443,7 +437,6 @@ If you need help or have questions:
 - User authentication and management
 - REST API for external integrations
 
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 ---
 

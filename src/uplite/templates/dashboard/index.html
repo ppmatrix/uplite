@@ -1,4 +1,4 @@
-<!-- Dashboard Template - Updated: 2025-08-16 15:35 -->
+<!-- Dashboard Template - Updated: 2025-08-16 16:15 -->
 {% extends "base.html" %}
 
 {% block title %}Dashboard - UpLite{% endblock %}
@@ -33,48 +33,11 @@
     transition: background-color 0.3s ease;
 }
 
-/* System Status Widget Styles */
-.system-metric {
-    margin-bottom: 1rem;
-}
-
-.system-metric-header {
-    display: flex;
-    justify-content: between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-}
-
-.system-metric-title {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.system-progress {
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.system-info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.system-info-card {
-    background: var(--bg-primary);
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
-}
-
-/* Connection Monitor Styles (existing) */
 .connection-summary {
     margin-bottom: 25px;
 }
 
+/* 5-Column Connection Layout */
 .connection-item {
     display: flex;
     align-items: center;
@@ -104,6 +67,7 @@
     justify-content: center;
 }
 
+/* Column 1: Logo */
 .connection-logo {
     width: 40px;
     justify-content: center;
@@ -111,6 +75,14 @@
     margin-right: 8px;
 }
 
+.connection-logo-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+/* Column 2: Connection Info */
 .connection-info {
     flex: 1;
     min-width: 100px;
@@ -120,6 +92,7 @@
     justify-content: center;
 }
 
+/* Column 3: Chart */
 .connection-chart {
     width: 75px;
     justify-content: center;
@@ -127,6 +100,7 @@
     margin: 0 4px;
 }
 
+/* Column 4: Time Badge */
 .connection-time {
     width: 55px;
     justify-content: center;
@@ -134,6 +108,7 @@
     margin-left: 6px;
 }
 
+/* Column 5: External Link */
 .connection-link {
     width: 18px;
     justify-content: center;
@@ -167,6 +142,7 @@
     box-shadow: none !important;
 }
 
+/* Connection Info */
 .connection-name {
     font-weight: 600;
     font-size: 1rem;
@@ -191,6 +167,29 @@
     transition: color 0.3s ease;
 }
 
+/* Connection Status Colors */
+.status-up {
+    border-left: 4px solid #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.status-down {
+    border-left: 4px solid #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.status-unknown {
+    border-left: 4px solid #6c757d;
+    background: rgba(108, 117, 125, 0.1);
+}
+
+.connection-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: var(--primary-color);
+}
+
+/* Scrolling line chart */
 .ping-chart-container {
     display: flex;
     align-items: center;
@@ -238,6 +237,43 @@
 
 .non-clickable .external-link-icon {
     display: none;
+}
+
+/* System Status Widget Styles */
+.system-metric {
+    margin-bottom: 1rem;
+}
+
+.system-metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.system-metric-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.system-progress {
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.system-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.system-info-card {
+    background: var(--bg-primary);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
 }
 
 /* Responsive adjustments */
@@ -302,7 +338,7 @@
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
-                    <p class="mt-3">Loading {% if widget_config.widget_type == 'system_status' %}system status{% elif widget_config.widget_type == 'connection_monitor' %}connection status{% elif widget_config.widget_type == 'service_status' %}service status{% elif widget_config.widget_type == 'logs_viewer' %}logs{% else %}widget data{% endif %}...</p>
+                    <p class="mt-3">Loading {% if widget_config.widget_type == "system_status" %}system status{% elif widget_config.widget_type == "connection_monitor" %}connection status{% elif widget_config.widget_type == "service_status" %}service status{% elif widget_config.widget_type == "logs_viewer" %}logs{% else %}widget data{% endif %}...</p>
                 </div>
             </div>
         </div>
@@ -358,27 +394,53 @@ function loadAllWidgets() {
 function loadWidgetData(widgetId, widgetType) {
     const widgetBody = document.getElementById(`widget-${widgetId}-body`);
     
-    return fetch(`/api/widgets/${widgetId}/data`)
-        .then(response => {
-            if (response.status === 401 || response.status === 403) {
-                throw new Error("Authentication required - please refresh the page and login");
-            }
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
-            } else {
-                renderWidget(widgetType, data, widgetBody);
-            }
-        })
-        .catch(error => {
-            console.error(`❌ Error loading ${widgetType} widget:`, error);
-            widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load widget data: ${error.message}</div>`;
-        });
+    // Special handling for connection_monitor widget - use dashboard refresh
+    if (widgetType === "connection_monitor") {
+        return fetch(`/api/dashboard/refresh`)
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error("Authentication required - please refresh the page and login");
+                }
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+                } else {
+                    renderConnectionMonitor(data, widgetBody);
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Error loading ${widgetType} widget:`, error);
+                widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load widget data: ${error.message}</div>`;
+            });
+    } else {
+        // For other widgets, use the widget-specific API
+        return fetch(`/api/widgets/${widgetId}/data`)
+            .then(response => {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error("Authentication required - please refresh the page and login");
+                }
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status} ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
+                } else {
+                    renderWidget(widgetType, data, widgetBody);
+                }
+            })
+            .catch(error => {
+                console.error(`❌ Error loading ${widgetType} widget:`, error);
+                widgetBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-wifi-off"></i> Failed to load widget data: ${error.message}</div>`;
+            });
+    }
 }
 
 function renderWidget(widgetType, data, container) {
@@ -398,6 +460,212 @@ function renderWidget(widgetType, data, container) {
         default:
             container.innerHTML = `<div class="alert alert-warning">Unknown widget type: ${widgetType}</div>`;
     }
+}
+
+// Connection Monitor rendering function - handles both signatures
+function renderConnectionMonitor(data, container) {
+    // If called with only one parameter, find the container
+    if (!container) {
+        container = document.querySelector('[data-widget-type="connection_monitor"] .widget-body');
+        if (!container) {
+            console.error("❌ Cannot find connection monitor container");
+            return;
+        }
+    }
+    
+    if (!data) {
+        console.error("❌ No data provided to renderConnectionMonitor");
+        container.innerHTML = '<div class="alert alert-danger">No data received from API</div>';
+        return;
+    }
+    
+    if (!data.connections || data.connections.length === 0) {
+        container.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
+        return;
+    }
+    
+    // Generate summary section from connection data
+    const upCount = data.connections.filter(conn => conn.last_status === 'up').length;
+    const downCount = data.connections.filter(conn => conn.last_status === 'down').length;
+    const totalCount = data.connections.length;
+    
+    const overallStatus = downCount === 0 ? 'success' : (upCount === 0 ? 'danger' : 'warning');
+    const overallMessage = downCount === 0 ? 'All services operational' : 
+                          upCount === 0 ? 'All services down' : 
+                          `${downCount} service${downCount > 1 ? 's' : ''} experiencing issues`;
+
+    const summaryHtml = `
+        <div class="connection-summary">
+            <div class="alert alert-${overallStatus} d-flex justify-content-between align-items-center">
+                <div>
+                    <strong><i class="bi bi-hdd-network"></i> ${overallMessage}</strong>
+                    <div class="mt-2">
+                        <small>
+                            <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
+                            <span class="badge bg-success me-2">Up: ${upCount}</span>
+                            ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
+                            ${data.connections.filter(conn => conn.last_status === 'unknown').length > 0 ? `<span class="badge bg-warning me-2">Unknown: ${data.connections.filter(conn => conn.last_status === 'unknown').length}</span>` : ''}
+                        </small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <small class="text-muted">
+                        <i class="bi bi-clock"></i> 
+                        Updated ${new Date().toLocaleTimeString()}
+                    </small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Generate connections list with all the original functionality
+    let connectionsHtml = '<div class="connections-list row">';
+    
+    // Generate sample historical data as fallback when no real data available
+    function generateSampleHistory(conn) {
+        const baseTime = conn.median_response_time || conn.last_response_time || 100;
+        const variance = baseTime * 0.3;
+        const history = [];
+        
+        for (let i = 0; i < 20; i++) {
+            const time = baseTime + (Math.random() - 0.5) * variance;
+            const status = Math.random() > 0.1 ? 'up' : 'down';
+            history.push({
+                timestamp: Date.now() - (20 - i) * 60000,
+                last_response_time: Math.max(1, time),
+                status: status
+            });
+        }
+        return history;
+    }
+    
+    // Create ultra-minimal SVG line chart
+    function createSVGChart(history, currentStatus) {
+        const width = 80;
+        const height = 20;
+        
+        const validData = history.filter(h => {
+            const responseTime = h.response_time || h.last_response_time;
+            const status = h.status;
+            return responseTime && status === 'up';
+        });
+        
+        if (validData.length < 2) {
+            return `<div class="no-chart-data">—</div>`;
+        }
+        
+        const responseTimes = validData.map(h => h.response_time || h.last_response_time);
+        const minTime = Math.min(...responseTimes);
+        const maxTime = Math.max(...responseTimes);
+        const timeRange = maxTime - minTime || 1;
+        
+        const pathData = validData.map((h, i) => {
+            const responseTime = h.response_time || h.last_response_time;
+            const x = (i / (validData.length - 1)) * width;
+            const y = height - ((responseTime - minTime) / timeRange) * height;
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+        }).join(' ');
+        
+        const color = currentStatus === 'up' ? '#059669' : '#dc2626';
+        
+        return `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="display:block;background:transparent;"><path d="${pathData}" fill="none" stroke="${color}" stroke-width="1" vector-rendering="crispEdges"/></svg>`;
+    }
+
+    function isClickableUrl(url) {
+        if (!url) return false;
+        if (url.startsWith('http://') || url.startsWith('https://')) return true;
+        if (/^\d+\.\d+\.\d+\.\d+$/.test(url)) return false;
+        return false;
+    }
+
+    function buildConnectionUrl(conn) {
+        let url = conn.target;
+        if (conn.port && !url.includes(":" + conn.port)) {
+            if (url.startsWith("http://") || url.startsWith("https://")) {
+                try {
+                    const urlObj = new URL(url);
+                    if (!urlObj.port) {
+                        urlObj.port = conn.port;
+                        url = urlObj.toString();
+                    }
+                } catch (e) {
+                    url = url + ":" + conn.port;
+                }
+            } else {
+                url = url + ":" + conn.port;
+            }
+        }
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "https://" + url;
+        }
+        return url;
+    }
+
+    function makeConnectionClickable(element, url, connectionName) {
+        if (!isClickableUrl(url)) {
+            element.classList.add('non-clickable');
+            return;
+        }
+        element.addEventListener('click', function(e) {
+            e.preventDefault();
+            window.open(url, '_blank', 'noopener,noreferrer');
+        });
+    }
+    
+    data.connections.forEach((conn, index) => {
+        const isClickable = isClickableUrl(conn.target);
+        const statusClass = conn.last_status === 'up' ? 'status-up' : conn.last_status === 'down' ? 'status-down' : 'status-unknown';
+        
+        const generateChart = (conn) => {
+            const historyData = conn.history && conn.history.length > 0 ? conn.history : generateSampleHistory(conn);
+            return createSVGChart(historyData, conn.last_status);
+        };
+        
+        connectionsHtml += `
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
+            <div class="connection-item ${statusClass}" data-url="${buildConnectionUrl(conn)}" data-name="${conn.name}">
+                <div class="connection-column connection-logo">
+                    ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
+                </div>
+                <div class="connection-column connection-info">
+                    <div class="connection-name">${conn.name}</div>
+                    <div class="connection-description">${conn.description || conn.target}</div>
+                </div>
+                <div class="connection-column connection-chart">
+                    <div class="ping-chart-container">${generateChart(conn)}</div>
+                </div>
+                <div class="connection-column connection-time">
+                    ${(() => {
+                    const responseTime = conn.median_response_time || conn.last_response_time;
+                    if (!responseTime) {
+                        return '<div class="response-time-display badge bg-danger">ERR</div>';
+                    }
+                    let colorClass = 'badge bg-danger';
+                    if (responseTime < 100) colorClass = 'badge bg-success';
+                    else if (responseTime < 300) colorClass = 'badge bg-warning text-dark';
+                    else if (responseTime < 1000) colorClass = 'badge bg-warning';
+                    const roundedTime = Math.round(responseTime);
+                    const title = conn.median_response_time ? 'Median response time' : 'Current response time';
+                    return `<div class="response-time-display ${colorClass}" title="${title}">${roundedTime}ms</div>`;
+                })()}
+                </div>
+                <div class="connection-column connection-link">
+                    ${isClickable ? '<i class="bi bi-box-arrow-up-right external-link-icon"></i>' : '<span class="link-placeholder"></span>'}
+                </div>
+            </div>
+        </div>`;
+    });
+    connectionsHtml += '</div>';
+    
+    container.innerHTML = summaryHtml + connectionsHtml;
+    
+    // Add click handlers to clickable connections
+    const connectionItems = container.querySelectorAll('.connection-item');
+    connectionItems.forEach(item => {
+        const url = item.dataset.url;
+        const name = item.dataset.name;
+        makeConnectionClickable(item, url, name);
+    });
 }
 
 function renderSystemStatus(data, container) {
@@ -476,94 +744,6 @@ function renderSystemStatus(data, container) {
 
     container.innerHTML = html;
 }
-
-function renderConnectionMonitor(data, container) {
-    // Existing connection monitor rendering logic
-    if (!data || !data.connections) {
-        container.innerHTML = '<div class="alert alert-warning">No connection data available</div>';
-        return;
-    }
-
-    if (data.connections.length === 0) {
-        container.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
-        return;
-    }
-    
-    // Generate summary section
-    const upCount = data.connections.filter(conn => conn.last_status === 'up').length;
-    const downCount = data.connections.filter(conn => conn.last_status === 'down').length;
-    const totalCount = data.connections.length;
-    
-    const overallStatus = downCount === 0 ? 'success' : (upCount === 0 ? 'danger' : 'warning');
-    const overallMessage = downCount === 0 ? 'All services operational' : 
-                          upCount === 0 ? 'All services down' : 
-                          `${downCount} service${downCount > 1 ? 's' : ''} experiencing issues`;
-
-    const summaryHtml = `
-        <div class="connection-summary">
-            <div class="alert alert-${overallStatus} d-flex justify-content-between align-items-center">
-                <div>
-                    <strong><i class="bi bi-hdd-network"></i> ${overallMessage}</strong>
-                    <div class="mt-2">
-                        <small>
-                            <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
-                            <span class="badge bg-success me-2">Up: ${upCount}</span>
-                            ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
-                        </small>
-                    </div>
-                </div>
-                <div class="text-end">
-                    <small class="text-muted">
-                        <i class="bi bi-clock"></i> 
-                        Updated ${new Date().toLocaleTimeString()}
-                    </small>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Generate connections list (simplified version)
-    let connectionsHtml = '<div class="connections-list row">';
-    
-    data.connections.forEach(conn => {
-        const statusClass = conn.last_status === 'up' ? 'status-up' : conn.last_status === 'down' ? 'status-down' : 'status-unknown';
-        
-        connectionsHtml += `
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
-                <div class="connection-item ${statusClass}">
-                    <div class="connection-column connection-info">
-                        <div class="connection-name">${conn.name}</div>
-                        <div class="connection-description">${conn.description || conn.target}</div>
-                    </div>
-                    <div class="connection-column connection-time">
-                        ${conn.last_response_time ? 
-                            `<div class="badge bg-${conn.last_response_time < 100 ? 'success' : conn.last_response_time < 300 ? 'warning' : 'danger'}">${Math.round(conn.last_response_time)}ms</div>` : 
-                            '<div class="badge bg-secondary">N/A</div>'
-                        }
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    connectionsHtml += '</div>';
-    
-    container.innerHTML = summaryHtml + connectionsHtml;
-}
-
-function renderServiceStatus(data, container) {
-    container.innerHTML = '<div class="alert alert-info">Service Status widget coming soon!</div>';
-}
-
-function renderLogsViewer(data, container) {
-    container.innerHTML = '<div class="alert alert-info">Logs Viewer widget coming soon!</div>';
-}
-</script>
-{% endblock %}
-
-
-<script>
-// Additional render functions for Service Status and Logs Viewer widgets
 
 function renderServiceStatus(data, container) {
     if (data.error) {
@@ -716,104 +896,5 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
-
-// Update the existing renderConnectionMonitor function to use the correct data structure
-function renderConnectionMonitor(data, container) {
-    // Check if this is the new widget format or the old dashboard format
-    if (data.connections) {
-        // New widget format with proper connection data
-        renderConnectionMonitorWidget(data, container);
-    } else if (data.summary && data.connections) {
-        // Widget format from connection_monitor.py
-        renderConnectionMonitorWidget(data, container);
-    } else {
-        // Fallback for old format or missing data
-        container.innerHTML = '<div class="alert alert-warning">Connection monitor data format not recognized</div>';
-    }
-}
-
-function renderConnectionMonitorWidget(data, container) {
-    if (data.error) {
-        container.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> ${data.error}</div>`;
-        return;
-    }
-
-    if (!data.connections || data.connections.length === 0) {
-        container.innerHTML = '<div class="alert alert-warning">Get started by adding connections to monitor your services. <a href="/dashboard/connections" class="alert-link"><i class="bi bi-plus-circle"></i> Go to Connections page</a> to create your first connection.</div>';
-        return;
-    }
-    
-    // Use widget summary if available, otherwise calculate from connections
-    let summary = data.summary;
-    if (!summary) {
-        const totalCount = data.connections.length;
-        const upCount = data.connections.filter(conn => conn.status === 'up' || conn.last_status === 'up').length;
-        const downCount = data.connections.filter(conn => conn.status === 'down' || conn.last_status === 'down').length;
-        
-        summary = {
-            total: totalCount,
-            up: upCount,
-            down: downCount,
-            overall_status: downCount === 0 ? 'success' : (upCount === 0 ? 'danger' : 'warning'),
-            overall_message: downCount === 0 ? 'All services operational' : 
-                           upCount === 0 ? 'All services down' : 
-                           `${downCount} service${downCount > 1 ? 's' : ''} experiencing issues`
-        };
-    }
-    
-    // Summary section
-    const summaryHtml = `
-        <div class="connection-summary mb-3">
-            <div class="alert alert-${summary.overall_status} d-flex justify-content-between align-items-center">
-                <div>
-                    <strong><i class="bi bi-hdd-network"></i> ${summary.overall_message}</strong>
-                    <div class="mt-2">
-                        <small>
-                            <span class="badge bg-secondary me-2">Total: ${summary.total}</span>
-                            <span class="badge bg-success me-2">Up: ${summary.up}</span>
-                            ${summary.down > 0 ? `<span class="badge bg-danger me-2">Down: ${summary.down}</span>` : ''}
-                            ${summary.unknown > 0 ? `<span class="badge bg-warning me-2">Unknown: ${summary.unknown}</span>` : ''}
-                        </small>
-                    </div>
-                </div>
-                <div class="text-end">
-                    <small class="text-muted">
-                        <i class="bi bi-clock"></i> 
-                        Updated ${new Date(data.timestamp).toLocaleTimeString()}
-                    </small>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Connections list
-    let connectionsHtml = '<div class="connections-list row">';
-    
-    data.connections.forEach(conn => {
-        const status = conn.status || conn.last_status || 'unknown';
-        const responseTime = conn.response_time || conn.last_response_time || conn.median_response_time;
-        const statusClass = status === 'up' ? 'status-up' : status === 'down' ? 'status-down' : 'status-unknown';
-        
-        connectionsHtml += `
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
-                <div class="connection-item ${statusClass}">
-                    <div class="connection-column connection-info">
-                        <div class="connection-name">${conn.name}</div>
-                        <div class="connection-description">${conn.description || conn.target}</div>
-                    </div>
-                    <div class="connection-column connection-time">
-                        ${responseTime ? 
-                            `<div class="badge bg-${responseTime < 100 ? 'success' : responseTime < 300 ? 'warning' : 'danger'}">${Math.round(responseTime)}ms</div>` : 
-                            '<div class="badge bg-secondary">N/A</div>'
-                        }
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    connectionsHtml += '</div>';
-    
-    container.innerHTML = summaryHtml + connectionsHtml;
-}
 </script>
+{% endblock %}

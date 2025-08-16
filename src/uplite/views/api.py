@@ -118,10 +118,18 @@ def check_connection(connection_id):
 @login_required
 def get_widgets():
     """Get user's widget configurations."""
-    widgets = WidgetConfig.query.filter_by(
-        user_id=current_user.id,
-        is_enabled=True
-    ).order_by(WidgetConfig.position).all()
+    # Check if we should only return enabled widgets (for dashboard) or all widgets (for management)
+    enabled_only = request.args.get('enabled_only', 'true').lower() == 'true'
+    
+    if enabled_only:
+        widgets = WidgetConfig.query.filter_by(
+            user_id=current_user.id,
+            is_enabled=True
+        ).order_by(WidgetConfig.position).all()
+    else:
+        widgets = WidgetConfig.query.filter_by(
+            user_id=current_user.id
+        ).order_by(WidgetConfig.position).all()
     
     return jsonify([widget.to_dict() for widget in widgets])
 
@@ -661,3 +669,53 @@ def reorder_widgets():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+
+@bp.route('/debug/cleanup-duplicates', methods=['GET', 'POST'])
+@login_required
+def cleanup_duplicate_widgets():
+    """Remove duplicate widgets, keeping the most recent of each type."""
+    from collections import defaultdict
+    
+    # Get all widgets for current user
+    widgets = WidgetConfig.query.filter_by(user_id=current_user.id).all()
+    
+    # Group by widget_type
+    widgets_by_type = defaultdict(list)
+    for widget in widgets:
+        widgets_by_type[widget.widget_type].append(widget)
+    
+    removed_count = 0
+    kept_widgets = []
+    
+    # For each widget type, keep only the most recent (highest ID)
+    for widget_type, widget_list in widgets_by_type.items():
+        if len(widget_list) > 1:
+            # Sort by ID (most recent = highest ID)
+            widget_list.sort(key=lambda w: w.id, reverse=True)
+            # Keep the first one (most recent)
+            kept_widgets.append(widget_list[0])
+            # Remove the rest
+            for widget in widget_list[1:]:
+                db.session.delete(widget)
+                removed_count += 1
+        else:
+            # Only one widget of this type, keep it
+            kept_widgets.append(widget_list[0])
+    
+    # Reorder positions to be sequential
+    kept_widgets.sort(key=lambda w: w.position)
+    for i, widget in enumerate(kept_widgets):
+        widget.position = i
+    
+    try:
+        db.session.commit()
+        return jsonify({
+            'message': f'Cleanup complete: removed {removed_count} duplicate widgets',
+            'remaining_widgets': len(kept_widgets),
+            'widgets': [w.to_dict() for w in kept_widgets]
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500

@@ -94,6 +94,7 @@
         <i class="bi bi-puzzle"></i> Widget Management
     </h1>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal" id="addWidgetButton">
+    </button>
         <i class="bi bi-plus-circle"></i> Add Widget
     </button>
         <i class="bi bi-plus-circle"></i> Add Widget
@@ -246,7 +247,7 @@ async function loadUserWidgets() {
     try {
         document.getElementById('loading-configs').style.display = 'block';
         
-        const response = await fetch('/api/widgets');
+        const response = await fetch('/api/widgets?enabled_only=false');
         const data = await response.json();
         
         if (response.ok) {
@@ -751,3 +752,33 @@ async function updateWidgetPositions() {
 }
 </script>
 {% endblock %}
+
+<script>
+    if (!confirm('This will remove duplicate widgets, keeping only the most recent of each type. Continue?')) {
+        return;
+    }
+    
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-tools"></i> Fixing...';
+    
+    try {
+        const response = await fetch('/api/debug/cleanup-duplicates', {
+            method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast(data.message, 'success');
+            // Refresh the widgets list
+            loadUserWidgets();
+        } else {
+            showToast('Error: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        showToast('Failed to cleanup: ' + error.message, 'error');
+    } finally {
+        button.disabled = false;
+    }
+}
+</script>

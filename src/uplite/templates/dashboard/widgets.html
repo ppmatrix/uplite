@@ -55,6 +55,34 @@
     margin-right: 10px;
 }
 .drag-handle:active {
+}
+
+/* Enhanced drag and drop styles */
+.sortable-widget {
+    transition: all 0.3s ease;
+}
+
+.sortable-widget.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.sortable-widget.drag-over {
+    border: 2px dashed #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+    transform: scale(1.02);
+}
+
+.drag-handle:hover {
+    color: #007bff;
+}
+
+.sortable-widget:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sortable-widget[draggable="true"] {
+    user-select: none;
     cursor: grabbing;
 }
 </style>
@@ -262,6 +290,7 @@ function renderAvailableWidgets() {
         
         container.appendChild(col);
     });
+    
 }
 
 // Render user's configured widgets
@@ -290,7 +319,7 @@ function renderUserWidgets() {
         const col = document.createElement('div');
         col.className = 'col-lg-6 col-md-6 mb-3';
         col.innerHTML = `
-            <div class="card widget-card sortable-widget" data-widget-id="${widget.id}">
+            <div class="card widget-card sortable-widget" data-widget-id="${widget.id}" data-position="${widget.position}" draggable="true">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="flex-grow-1">
@@ -334,6 +363,10 @@ function renderUserWidgets() {
         
         container.appendChild(col);
     });
+    
+    // Setup drag and drop
+    setupDragAndDrop();
+    
 }
 
 // Get widget icon based on type
@@ -562,6 +595,111 @@ function showToast(message, type = 'info') {
     toastElement.addEventListener('hidden.bs.toast', () => {
         toastElement.remove();
     });
+}
+
+// Drag and drop functionality
+let draggedElement = null;
+
+function setupDragAndDrop() {
+    const sortableWidgets = document.querySelectorAll(".sortable-widget");
+    
+    sortableWidgets.forEach(widget => {
+        widget.addEventListener("dragstart", handleDragStart);
+        widget.addEventListener("dragend", handleDragEnd);
+        widget.addEventListener("dragover", handleDragOver);
+        widget.addEventListener("drop", handleDrop);
+        widget.addEventListener("dragenter", handleDragEnter);
+        widget.addEventListener("dragleave", handleDragLeave);
+    });
+}
+
+function handleDragStart(e) {
+    draggedElement = this;
+    this.style.opacity = "0.5";
+    this.classList.add("dragging");
+    
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", this.dataset.widgetId);
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = "";
+    this.classList.remove("dragging");
+    
+    document.querySelectorAll(".sortable-widget").forEach(widget => {
+        widget.classList.remove("drag-over");
+    });
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = "move";
+    return false;
+}
+
+function handleDragEnter(e) {
+    if (this !== draggedElement) {
+        this.classList.add("drag-over");
+    }
+}
+
+function handleDragLeave(e) {
+    this.classList.remove("drag-over");
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedElement !== this) {
+        const draggedId = parseInt(draggedElement.dataset.widgetId);
+        const targetId = parseInt(this.dataset.widgetId);
+        
+        const draggedWidget = userWidgets.find(w => w.id === draggedId);
+        const targetWidget = userWidgets.find(w => w.id === targetId);
+        
+        if (draggedWidget && targetWidget) {
+            const tempPosition = draggedWidget.position;
+            draggedWidget.position = targetWidget.position;
+            targetWidget.position = tempPosition;
+            
+            updateWidgetPositions();
+        }
+    }
+    
+    this.classList.remove("drag-over");
+    return false;
+}
+
+async function updateWidgetPositions() {
+    try {
+        const sortedWidgets = [...userWidgets].sort((a, b) => a.position - b.position);
+        const widgetIds = sortedWidgets.map(w => w.id);
+        
+        const response = await fetch("/api/widgets/reorder", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ widget_ids: widgetIds })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showToast("Widgets reordered successfully!", "success");
+            loadUserWidgets();
+        } else {
+            showToast("Error reordering widgets: " + (result.error || "Unknown error"), "error");
+            loadUserWidgets();
+        }
+    } catch (error) {
+        showToast("Failed to reorder widgets: " + error.message, "error");
+        loadUserWidgets();
+    }
 }
 </script>
 {% endblock %}

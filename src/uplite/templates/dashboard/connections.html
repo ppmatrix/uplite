@@ -1078,7 +1078,8 @@ function submitEnhancedEditForm(connectionId) {
     
     // Add fields to form data
     Object.keys(fields).forEach(key => {
-        if (fields[key] !== '' && fields[key] !== null && fields[key] !== undefined) {
+        // Always append non-null/undefined fields, allow empty strings for optional fields like port
+        if (fields[key] !== null && fields[key] !== undefined) {
             formData.append(key, fields[key]);
         }
     });

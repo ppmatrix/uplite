@@ -754,17 +754,17 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 
 
 .connection-card .card-text {
-    color: blue !important;
-    font-size: 1.5rem !important;
-    background-color: lightgray !important;
+    /*color: blue !important;*/
+    font-size: 1rem !important;
+    /*background-color: lightgray !important;*/
 }
 
 .card-header strong {
-    color: green !important;
+    color: rgb(89, 119, 175) !important;
     font-size: 2rem !important;
 }
 
 p.card-text {
-    color: purple !important;
-    font-size: 1.5rem !important;
+    /*color: purple !important;
+    font-size: 1.5rem !important;*/
 }

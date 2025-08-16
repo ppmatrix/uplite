@@ -70,22 +70,35 @@ class ConnectionChecker:
             if not url.startswith(("http://", "https://")):
                 url = f"http://{url}"
             
-            # Make request
+            # Make request with proper headers for Cloudflare and other services
+            headers = {
+                'User-Agent': 'UpLite-Monitor/1.0 (Connection Monitor)',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+            
             response = requests.get(
                 url,
                 timeout=connection.timeout,
                 allow_redirects=True,
-                verify=False  # Don't verify SSL certificates
+                verify=False,  # Don't verify SSL certificates
+                headers=headers
             )
             
             end_time = time.time()
             response_time = (end_time - start_time) * 1000  # Convert to milliseconds
             
-            # Check if response is successful OR authentication required
-            # For auth-required services, 401 means the service is UP but needs login
-            if response.status_code < 400 or response.status_code == 401:
+            # Check if response is successful OR authentication/authorization required
+            # For protected services: 401=auth required, 403=forbidden but service is UP
+            if response.status_code < 400 or response.status_code in [401, 403]:
                 if response.status_code == 401:
                     return 'up', response_time, 'Service up (authentication required)'
+                elif response.status_code == 403:
+                    return 'up', response_time, 'Service up (access forbidden but responsive)'
                 else:
                     return 'up', response_time, None
             else:

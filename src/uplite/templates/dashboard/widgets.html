@@ -93,7 +93,9 @@
     <h1 class="mb-0">
         <i class="bi bi-puzzle"></i> Widget Management
     </h1>
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWidgetModal" id="addWidgetButton">
+        <i class="bi bi-plus-circle"></i> Add Widget
+    </button>
         <i class="bi bi-plus-circle"></i> Add Widget
     </button>
 </div>
@@ -228,8 +230,7 @@ async function loadAvailableWidgets() {
         
         if (response.ok) {
             availableWidgets = data.widgets;
-            renderAvailableWidgets();
-            populateWidgetTypeSelect();
+            updateAddWidgetButton();
         } else {
             showToast('Error loading available widgets: ' + (data.error || 'Unknown error'), 'error');
         }
@@ -251,6 +252,9 @@ async function loadUserWidgets() {
         if (response.ok) {
             userWidgets = data;
             renderUserWidgets();
+            renderAvailableWidgets();
+            populateWidgetTypeSelect();
+            updateAddWidgetButton();
         } else {
             showToast('Error loading your widgets: ' + (data.error || 'Unknown error'), 'error');
         }
@@ -262,11 +266,50 @@ async function loadUserWidgets() {
 }
 
 // Render available widgets
+// Update the Add Widget button state
+function updateAddWidgetButton() {
+    const addButton = document.getElementById("addWidgetButton");
+    const availableWidgetTypes = availableWidgets.filter(widget => 
+        !userWidgets.some(userWidget => userWidget.widget_type === widget.type)
+    );
+    
+    if (availableWidgetTypes.length === 0) {
+        addButton.disabled = true;
+        addButton.innerHTML = '<i class="bi bi-check-circle"></i> All Widgets Added';
+        addButton.title = "All available widget types have been added to your dashboard";
+    } else {
+        addButton.disabled = false;
+        addButton.innerHTML = '<i class="bi bi-plus-circle"></i> Add Widget';
+        addButton.title = "Add a new widget to your dashboard";
+    }
+}
+
+
 function renderAvailableWidgets() {
     const container = document.getElementById('available-widgets-list');
     container.innerHTML = '';
     
-    availableWidgets.forEach(widget => {
+    // Filter out widget types that user already has
+    const availableWidgetTypes = availableWidgets.filter(widget => 
+        !userWidgets.some(userWidget => userWidget.widget_type === widget.type)
+    );
+    
+    // Show message if no widgets are available to add
+    if (availableWidgetTypes.length === 0) {
+        container.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle"></i>
+                    <strong>All widget types added!</strong><br>
+                    You have added all available widget types to your dashboard. 
+                    You can manage them above or remove widgets to add different configurations.
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    availableWidgetTypes.forEach(widget => {
         const col = document.createElement('div');
         col.className = 'col-lg-4 col-md-6 mb-4';
         
@@ -385,7 +428,12 @@ function populateWidgetTypeSelect() {
     const select = document.getElementById('widgetType');
     select.innerHTML = '<option value="">Select a widget type...</option>';
     
-    availableWidgets.forEach(widget => {
+    // Only show widget types that haven't been added yet
+    const availableWidgetTypes = availableWidgets.filter(widget => 
+        !userWidgets.some(userWidget => userWidget.widget_type === widget.type)
+    );
+    
+    availableWidgetTypes.forEach(widget => {
         const option = document.createElement('option');
         option.value = widget.type;
         option.textContent = widget.display_name;

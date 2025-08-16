@@ -397,8 +397,6 @@ We welcome contributions from the community! Here's how to get started:
 
 ## 📚 Documentation
 
-- **[Development Setup](DEVELOPMENT.md)** - Development environment setup
-- **[Monitoring Guide](MONITORING_GUIDE.md)** - Monitoring service details
 
 ## 🗺️ Roadmap
 
@@ -439,7 +437,6 @@ If you need help or have questions:
 - User authentication and management
 - REST API for external integrations
 
-See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
 ---
 

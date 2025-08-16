@@ -1,5 +1,9 @@
 # UpLite - Lightweight Monitoring Dashboard
 
+<div align="center">
+  <img src="src/uplite/static/images/uplite_logo_dark.png" alt="UpLite Logo" width="200"/>
+</div>
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/flask-3.0+-green.svg)](https://flask.palletsprojects.com/)

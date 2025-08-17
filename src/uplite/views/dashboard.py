@@ -26,7 +26,7 @@ def index():
         widget_configs = _create_default_widgets(current_user.id)
     
     # Get connections for monitoring widgets - ORDER BY created_at for consistent display
-    connections = Connection.query.filter_by(is_active=True).order_by(Connection.created_at).all()
+    connections = Connection.query.filter_by(is_active=True).order_by(Connection.position).all()
     
     return render_template(
         'dashboard/index.html',
@@ -40,7 +40,7 @@ def index():
 def connections():
     """Connections management page."""
     # ORDER BY created_at for consistent display
-    connections = Connection.query.order_by(Connection.created_at).all()
+    connections = Connection.query.order_by(Connection.position).all()
     return render_template('dashboard/connections.html', connections=connections)
 
 

@@ -19,6 +19,7 @@ class Connection(db.Model):
     timeout = db.Column(db.Integer, default=10)  # seconds
     check_interval = db.Column(db.Integer, default=60)  # seconds
     is_active = db.Column(db.Boolean, default=True, nullable=False)
+    position = db.Column(db.Integer, default=0)  # Order for display (similar to widgets)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -65,10 +66,17 @@ class Connection(db.Model):
         
         db.session.commit()
     
+    def update_position(self, position):
+        """Update connection position."""
+        self.position = position
+        self.updated_at = datetime.utcnow()
+        db.session.commit()
+    
     def get_median_response_time(self, periods=10):
         """Get median response time from the last N periods."""
         from .connection_history import ConnectionHistory
         return ConnectionHistory.get_median_response_time(self.id, periods)
+        
     def get_chart_history(self, limit=20):
         """Get recent history for chart visualization."""
         from .connection_history import ConnectionHistory
@@ -107,6 +115,7 @@ class Connection(db.Model):
             'timeout': self.timeout,
             'check_interval': self.check_interval,
             'is_active': self.is_active,
+            'position': self.position,  # Add position to dict
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'last_check': self.last_check.isoformat() if self.last_check else None,

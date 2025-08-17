@@ -74,7 +74,7 @@ bp = Blueprint('api', __name__)
 @login_required
 def get_connections():
     """Get all connections with their status."""
-    connections = Connection.query.filter_by(is_active=True).order_by(Connection.created_at).all()
+    connections = Connection.query.filter_by(is_active=True).order_by(Connection.position).all()
     return jsonify([conn.to_dict() for conn in connections])
 
 
@@ -181,7 +181,7 @@ def get_widget_data(widget_id):
 def refresh_dashboard():
     """Refresh all dashboard data."""
     # Get all active connections
-    connections = Connection.query.filter_by(is_active=True).order_by(Connection.created_at).all()
+    connections = Connection.query.filter_by(is_active=True).order_by(Connection.position).all()
     
     # Check all connections
     checker = ConnectionChecker()
@@ -260,6 +260,10 @@ def add_connection():
             if suggested_icon:
                 logo_filename = suggester.copy_icon_to_connections(suggested_icon)
         
+        
+        # Get the next position for new connections
+        max_position = db.session.query(db.func.max(Connection.position)).scalar() or -1
+        next_position = max_position + 1
         connection = Connection(
             name=data["name"].strip(),
             description=data.get("description", "").strip() or None,
@@ -268,6 +272,7 @@ def add_connection():
             port=int(data["port"]) if data.get("port") and str(data["port"]).strip() else None,
             timeout=int(data.get("timeout", 10)),
             check_interval=int(data.get("check_interval", 60)),
+            position=next_position,
             logo_filename=logo_filename
         )
         
@@ -719,3 +724,44 @@ def cleanup_duplicate_widgets():
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
+
+
+@bp.route('/connections/reorder', methods=['POST'])
+@login_required
+def reorder_connections():
+    """Reorder connections based on provided connection IDs list."""
+    data = request.get_json()
+    
+    if not data or "connection_ids" not in data:
+        return jsonify({"error": "connection_ids list required"}), 400
+    
+    connection_ids = data["connection_ids"]
+    
+    if not isinstance(connection_ids, list):
+        return jsonify({"error": "connection_ids must be a list"}), 400
+    
+    try:
+        # Get all connections
+        all_connections = {
+            c.id: c for c in Connection.query.all()
+        }
+        
+        # Validate all connection IDs exist
+        for connection_id in connection_ids:
+            if connection_id not in all_connections:
+                return jsonify({"error": f"Connection {connection_id} not found"}), 400
+        
+        # Update positions
+        for position, connection_id in enumerate(connection_ids):
+            all_connections[connection_id].position = position
+        
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Connections reordered successfully",
+            "connections": [all_connections[cid].to_dict() for cid in connection_ids]
+        })
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

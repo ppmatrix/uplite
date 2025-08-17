@@ -791,3 +791,19 @@ main.container-fluid {
 .container.mt-3 {
     margin-top: 0.5rem !important;
 }
+
+/* Section header styling for consistent typography hierarchy */
+.section-header {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-header i {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}

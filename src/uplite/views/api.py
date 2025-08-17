@@ -74,7 +74,7 @@ bp = Blueprint('api', __name__)
 @login_required
 def get_connections():
     """Get all connections with their status."""
-    connections = Connection.query.filter_by(is_active=True).all()
+    connections = Connection.query.filter_by(is_active=True).order_by(Connection.created_at).all()
     return jsonify([conn.to_dict() for conn in connections])
 
 
@@ -181,7 +181,7 @@ def get_widget_data(widget_id):
 def refresh_dashboard():
     """Refresh all dashboard data."""
     # Get all active connections
-    connections = Connection.query.filter_by(is_active=True).all()
+    connections = Connection.query.filter_by(is_active=True).order_by(Connection.created_at).all()
     
     # Check all connections
     checker = ConnectionChecker()

@@ -123,6 +123,74 @@
     -webkit-box-orient: vertical;
     word-break: break-word;
 }
+
+/* Drag and drop styles for connections */
+.sortable-connection {
+    cursor: move;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.sortable-connection:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.sortable-connection.dragging {
+    opacity: 0.5;
+    transform: rotate(3deg) scale(0.95);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.sortable-connection.drag-over {
+    border: 2px dashed #007bff;
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: scale(1.02);
+}
+
+.drag-handle {
+    cursor: grab;
+    color: #6c757d;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+    color: #007bff;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.sortable-connection:hover .drag-handle {
+    opacity: 1;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.reorder-info {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.reorder-info .bi {
+    color: #1976d2;
+}
 .connection-actions .btn {
     flex: 1;
     min-width: auto;
@@ -244,10 +312,17 @@ p.card-text {
 </div>
 
 
+<!-- Reorder Info -->
+<div class="reorder-info">
+    <i class="bi bi-arrows-move me-2"></i>
+    <strong>Drag and Drop Reordering</strong><br>
+    <small class="text-muted">Hover over connection cards and use the drag handle to reorder them as you prefer</small>
+</div>
 <div class="row">
     {% for connection in connections %}
-    <div class="col-xl-4 col-lg-6 col-md-6 connection-card">
+    <div class="col-xl-4 col-lg-6 col-md-6 connection-card sortable-connection" data-connection-id="{{ connection.id }}" data-position="{{ connection.position }}" draggable="true">
         <div class="card">
+                    <i class="bi bi-grip-vertical drag-handle"></i>
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                     <!-- Connection Icon -->
@@ -473,6 +548,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('statusFilter');
     const typeFilter = document.getElementById('typeFilter');
     const clearFiltersBtn = document.getElementById('clearFilters');
+
+    // Setup drag and drop functionality
+    loadConnectionsForReordering();
+    setTimeout(setupConnectionDragAndDrop, 500);
     const connectionCards = document.querySelectorAll('.connection-card');
 
     // Function to filter connections
@@ -1262,6 +1341,134 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+
+// Drag and drop functionality for connections
+let draggedConnection = null;
+let connections = [];
+
+function loadConnectionsForReordering() {
+    fetch("/api/connections", {
+        credentials: "same-origin"
+    })
+    .then(response => response.json())
+    .then(data => {
+        connections = data.sort((a, b) => a.position - b.position);
+    })
+    .catch(error => {
+        console.error("Error loading connections:", error);
+    });
+}
+
+function setupConnectionDragAndDrop() {
+    const sortableConnections = document.querySelectorAll(".sortable-connection");
+    
+    sortableConnections.forEach(connection => {
+        connection.addEventListener("dragstart", handleConnectionDragStart);
+        connection.addEventListener("dragend", handleConnectionDragEnd);
+        connection.addEventListener("dragover", handleConnectionDragOver);
+        connection.addEventListener("drop", handleConnectionDrop);
+        connection.addEventListener("dragenter", handleConnectionDragEnter);
+        connection.addEventListener("dragleave", handleConnectionDragLeave);
+    });
+}
+
+function handleConnectionDragStart(e) {
+    draggedConnection = this;
+    this.classList.add("dragging");
+    
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", this.dataset.connectionId);
+}
+
+function handleConnectionDragEnd(e) {
+    this.classList.remove("dragging");
+    
+    document.querySelectorAll(".sortable-connection").forEach(connection => {
+        connection.classList.remove("drag-over");
+    });
+}
+
+function handleConnectionDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = "move";
+    return false;
+}
+
+function handleConnectionDragEnter(e) {
+    if (this !== draggedConnection) {
+        this.classList.add("drag-over");
+    }
+}
+
+function handleConnectionDragLeave(e) {
+    this.classList.remove("drag-over");
+}
+
+function handleConnectionDrop(e) {
+    if (e.stopPropagation) {
+        e.stopPropagation();
+    }
+    
+    if (draggedConnection !== this) {
+        const draggedId = parseInt(draggedConnection.dataset.connectionId);
+        const targetId = parseInt(this.dataset.connectionId);
+        
+        // Update positions in connections array
+        const draggedIndex = connections.findIndex(c => c.id === draggedId);
+        const targetIndex = connections.findIndex(c => c.id === targetId);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+            // Swap positions
+            const tempPosition = connections[draggedIndex].position;
+            connections[draggedIndex].position = connections[targetIndex].position;
+            connections[targetIndex].position = tempPosition;
+            
+            updateConnectionPositions();
+        }
+    }
+    
+    this.classList.remove("drag-over");
+    return false;
+}
+
+async function updateConnectionPositions() {
+    try {
+        // Sort connections by position and get IDs in order
+        const sortedConnections = [...connections].sort((a, b) => a.position - b.position);
+        const connectionIds = sortedConnections.map(c => c.id);
+        
+        const response = await fetch("/api/connections/reorder", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({ connection_ids: connectionIds })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            if (typeof UpLite !== "undefined" && UpLite.notify) {
+                UpLite.notify.success("Connections reordered successfully!");
+            }
+            // Reload page to show new order
+            setTimeout(() => location.reload(), 500);
+        } else {
+            if (typeof UpLite !== "undefined" && UpLite.notify) {
+                UpLite.notify.error("Error reordering connections: " + (result.error || "Unknown error"));
+            }
+            setTimeout(() => location.reload(), 500);
+        }
+    } catch (error) {
+        if (typeof UpLite !== "undefined" && UpLite.notify) {
+            UpLite.notify.error("Failed to reorder connections: " + error.message);
+        }
+        setTimeout(() => location.reload(), 500);
+    }
+}
 function closeEditOverlay() {
     const overlay = document.getElementById("editOverlay");
     if (overlay) {

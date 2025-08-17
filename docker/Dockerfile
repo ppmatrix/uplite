@@ -20,15 +20,16 @@ RUN apt-get update && apt-get install -y \
 # Install uv
 RUN pip install uv
 
-# Copy project files
-COPY pyproject.toml uv.lock* ./
-
-# Install Python dependencies
-RUN uv sync --frozen --no-dev
-
-# Copy application code
+# Copy all necessary files for building
+COPY pyproject.toml uv.lock* README.md ./
 COPY src/ ./src/
+
+# Install Python dependencies with PostgreSQL and Redis support
+RUN uv sync --frozen --no-dev --extra postgres --extra redis
+
+# Copy remaining files including management scripts
 COPY .env* ./
+COPY manage.py ./
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash uplite && \

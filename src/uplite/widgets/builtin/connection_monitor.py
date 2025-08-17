@@ -27,7 +27,7 @@ class ConnectionMonitorWidget(BaseWidget):
         """Get connection monitoring data."""
         try:
             # Get all active connections
-            connections = Connection.query.filter_by(is_active=True).all()
+            connections = Connection.query.filter_by(is_active=True).order_by(Connection.position).all()
             
             # Count statuses
             total_connections = len(connections)

@@ -39,6 +39,7 @@ body {
     background-color: var(--bg-color);
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
+    padding-top: 76px !important; /* Account for fixed navbar */
 }
 
 .hero-section {
@@ -163,9 +164,17 @@ body {
     font-weight: 500;
 }
 
+/* Fixed Navbar Styles */
 .navbar {
     background-color: var(--navbar-bg) !important;
     transition: background-color 0.3s ease;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1030 !important;
+    width: 100% !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
 .navbar-brand, .navbar-nav .nav-link {
@@ -242,6 +251,10 @@ body {
     
     .hero-section {
         padding: 2rem 1rem;
+    }
+    
+    body {
+        padding-top: 68px !important; /* Adjust for smaller navbar on mobile */
     }
 }
 
@@ -767,4 +780,14 @@ p, h1, h2, h3, h4, h5, h6, span, div {
 p.card-text {
     /*color: purple !important;
     font-size: 1.5rem !important;*/
+}
+
+/* Adjust main content area for fixed navbar */
+main.container-fluid {
+    margin-top: 0 !important;
+}
+
+/* Adjust flash messages positioning */
+.container.mt-3 {
+    margin-top: 0.5rem !important;
 }

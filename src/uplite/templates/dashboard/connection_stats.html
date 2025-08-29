@@ -247,20 +247,6 @@
             </div>
         </div>
 
-        <!-- Response Time Chart -->
-        {% if stats_7d.avg_response_time %}
-        <div class="row charts-row">
-            <div class="col-md-12">
-                <div class="stat-card">
-                    <h5 class="chart-title"><i class="bi bi-speedometer2"></i> Response Time Analysis</h5>
-                    <div class="chart-container">
-                        <canvas id="responseTimeChart7d"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
         <!-- Daily Statistics Table -->
         <div class="row mb-4">
             <div class="col-md-12">
@@ -569,59 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    {% if stats_7d.avg_response_time %}
-    // Response Time Chart
-    const responseCtx = document.getElementById('responseTimeChart7d');
-    if (responseCtx) {
-        const validDays = dailyData.filter(d => d.avg_response_time !== null);
-        
-        new Chart(responseCtx, {
-            type: 'bar',
-            data: {
-                labels: validDays.map(d => d.date_formatted),
-                datasets: [{
-                    label: 'Average Response Time (ms)',
-                    data: validDays.map(d => d.avg_response_time),
-                    backgroundColor: function(context) {
-                        const value = context.parsed.y;
-                        if (value < 100) return successColor + '80';
-                        if (value < 300) return warningColor + '80';
-                        return dangerColor + '80';
-                    },
-                    borderColor: function(context) {
-                        const value = context.parsed.y;
-                        if (value < 100) return successColor;
-                        if (value < 300) return warningColor;
-                        return dangerColor;
-                    },
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.parsed.y.toFixed(1) + 'ms average';
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return value + 'ms';
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    {% endif %}
     
     {% endif %}
     

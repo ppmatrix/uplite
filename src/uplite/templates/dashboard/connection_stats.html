@@ -47,11 +47,30 @@
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 0.5rem;
+    color: #856404; /* Dark text for light background */
 }
 
 .incident-ongoing {
     background: #f8d7da;
     border-color: #f5c6cb;
+    color: #721c24; /* Dark text for light background */
+}
+
+/* Dark theme support for incident items */
+[data-bs-theme="dark"] .incident-item {
+    background: #332701;
+    border-color: #664d03;
+    color: #ffdf6b; /* Light text for dark background */
+}
+
+[data-bs-theme="dark"] .incident-ongoing {
+    background: #2c0b0e;
+    border-color: #842029;
+    color: #f1aeb5; /* Light text for dark background */
+}
+
+[data-bs-theme="dark"] .incident-item .text-muted {
+    color: #adb5bd !important; /* Lighter muted text in dark mode */
 }
 
 .daily-stats-table {

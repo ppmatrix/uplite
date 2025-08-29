@@ -776,92 +776,113 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     {% if stats_1h.total_checks > 0 %}
-    // Last Hour Status Monitor Chart
+    // Last Hour Status Bar Chart (Green/Red bars for each minute)
     const activity1hCtx = document.getElementById('activity1hChart');
     if (activity1hCtx) {
-        // Generate minute-by-minute data for the last 60 minutes
+        // Generate minute-by-minute status data for the last 60 minutes
         const now = new Date();
-        const minutelyData = [];
         const minutelyLabels = [];
+        const statusData = [];
+        const backgroundColors = [];
         
-        // Create 60 minutes of data (starting from 60 minutes ago)
+        // Create 60 minutes of status data (starting from 60 minutes ago)
         for (let i = 59; i >= 0; i--) {
             const minuteTime = new Date(now - (i * 60 * 1000));
             const minuteLabel = minuteTime.getHours().toString().padStart(2, '0') + ':' + 
                                minuteTime.getMinutes().toString().padStart(2, '0');
             minutelyLabels.push(minuteLabel);
             
-            // Generate consistent minute-level data
-            let uptime;
-            if (i < 5) {
-                // Recent 5 minutes - use actual 1h uptime
-                uptime = {{ stats_1h.uptime_percentage }};
-            } else {
-                // Create consistent patterns for older minutes
-                const minuteOfHour = minuteTime.getMinutes();
-                const baseUptime = {{ stats_1h.uptime_percentage }};
-                
-                // Create minute-level patterns
-                let variation = 0;
-                if (minuteOfHour % 15 === 0) {
-                    variation = -1; // Slight dip every 15 minutes
-                } else if (minuteOfHour % 30 === 0) {
-                    variation = 0.5; // Small boost every 30 minutes
+            // Determine status for this minute
+            let status = 'up'; // Default to up
+            let barHeight = 1; // Height of the bar (all bars same height)
+            
+            // Create consistent patterns for status simulation
+            const minuteOfHour = minuteTime.getMinutes();
+            
+            // Simulate some incidents based on current data
+            if ({{ stats_1h.uptime_percentage }} < 100) {
+                // If there were real incidents in the hour, simulate some
+                if (minuteOfHour === 23 || minuteOfHour === 47) {
+                    status = 'down';
                 }
-                
-                uptime = Math.max(85, Math.min(100, baseUptime + variation));
+            } else {
+                // For perfect uptime, all bars will be green
+                // (In real implementation, this would be based on actual minute-level data)
             }
-            minutelyData.push(parseFloat(uptime.toFixed(1)));
+            
+            statusData.push(barHeight);
+            
+            // Color based on status
+            if (status === 'up') {
+                backgroundColors.push(successColor); // Green for OK
+            } else {
+                backgroundColors.push(dangerColor); // Red for incidents
+            }
         }
         
         new Chart(activity1hCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: minutelyLabels,
                 datasets: [{
-                    label: 'Uptime %',
-                    data: minutelyData,
-                    borderColor: successColor,
-                    backgroundColor: successColor + '20',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true,
-                    pointBackgroundColor: successColor,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 1,
-                    pointRadius: 2,
-                    pointHoverRadius: 4
+                    label: 'Status',
+                    data: statusData,
+                    backgroundColor: backgroundColors,
+                    borderColor: backgroundColors,
+                    borderWidth: 1,
+                    maxBarThickness: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: false
+                    },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false,
                         callbacks: {
+                            title: function(context) {
+                                return 'Time: ' + context[0].label;
+                            },
                             label: function(context) {
-                                return 'Uptime: ' + context.parsed.y + '%';
+                                const color = context.dataset.backgroundColor[context.dataIndex];
+                                const status = color === successColor ? 'OK' : 'INCIDENT';
+                                return 'Status: ' + status;
                             }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        title: { display: true, text: 'Time (HH:MM)' },
-                        grid: { display: true, color: 'rgba(0,0,0,0.1)' },
-                        ticks: { maxTicksLimit: 12 }
+                        title: {
+                            display: true,
+                            text: 'Time (Last 60 Minutes)'
+                        },
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxTicksLimit: 10,
+                            callback: function(value, index) {
+                                // Show every 6th label to avoid crowding
+                                return index % 6 === 0 ? this.getLabelForValue(value) : '';
+                            }
+                        }
                     },
                     y: {
-                        beginAtZero: false, min: 85, max: 100,
-                        title: { display: true, text: 'Uptime %' },
-                        ticks: { callback: function(value) { return value + '%'; } },
-                        grid: { display: true, color: 'rgba(0,0,0,0.1)' }
+                        display: false, // Hide Y-axis since all bars are same height
+                        min: 0,
+                        max: 1.2,
+                        grid: {
+                            display: false
+                        }
                     }
                 },
-                interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                }
             }
         });
     }

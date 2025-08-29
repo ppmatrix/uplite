@@ -642,10 +642,50 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     {% endif %}
     
-    // Auto-refresh every 60 seconds
-    setInterval(function() {
-        location.reload();
-    }, 60000);
+        // Tab-preserving auto-refresh implemented below
+// Save active tab to localStorage before refresh
+function saveActiveTab() {
+    const activeTab = document.querySelector('.nav-link.active');
+    if (activeTab) {
+        const tabId = activeTab.getAttribute('data-bs-target') || activeTab.getAttribute('href');
+        localStorage.setItem('activeStatsTab', tabId);
+    }
+}
+
+// Restore active tab after page load
+function restoreActiveTab() {
+    const savedTabId = localStorage.getItem('activeStatsTab');
+    if (savedTabId) {
+        // Find the tab trigger
+        const tabTrigger = document.querySelector(`[data-bs-target="${savedTabId}"], [href="${savedTabId}"]`);
+        if (tabTrigger) {
+            // Create bootstrap tab instance and show it
+            const tab = new bootstrap.Tab(tabTrigger);
+            tab.show();
+        }
+    }
+}
+
+// Auto-refresh with tab preservation
+function refreshWithTabPreservation() {
+    saveActiveTab();
+    location.reload();
+}
+
+// Set up tab state saving on tab changes
+document.addEventListener('DOMContentLoaded', function() {
+    // Restore tab state on page load
+    restoreActiveTab();
+    
+    // Save tab state when user switches tabs
+    const tabTriggers = document.querySelectorAll('.nav-link[data-bs-toggle="tab"]');
+    tabTriggers.forEach(trigger => {
+        trigger.addEventListener('shown.bs.tab', saveActiveTab);
+    });
+    
+    // Auto-refresh every 60 seconds with tab preservation
+    setInterval(refreshWithTabPreservation, 60000);
 });
+
 </script>
 {% endblock %}

@@ -122,7 +122,7 @@ class ConnectionHistory(db.Model):
         incidents = ConnectionHistory._calculate_incidents(entries)
         
         # Calculate daily statistics
-        daily_stats = ConnectionHistory._calculate_daily_stats(entries, days)
+        daily_stats = ConnectionHistory._calculate_daily_stats(entries, days, incidents)
         
         return {
             'total_checks': total_checks,
@@ -138,26 +138,46 @@ class ConnectionHistory(db.Model):
     
     @staticmethod
     def _calculate_incidents(entries):
-        """Calculate downtime incidents from history entries."""
+        """Calculate downtime incidents from history entries.
+        Groups consecutive 'down' and 'unknown' statuses into single incidents,
+        only resetting when 'up' status occurs.
+        """
         incidents = []
         current_incident = None
         
         for entry in entries:
-            if entry.status == 'down' and current_incident is None:
-                # Start of new incident
+            is_incident = entry.status in ['down', 'unknown']
+            
+            if is_incident and current_incident is None:
+                # Start of new incident (down or unknown)
                 current_incident = {
                     'start_time': entry.timestamp,
                     'end_time': None,
                     'duration_minutes': 0,
-                    'error_message': entry.error_message
+                    'error_message': entry.error_message,
+                    'status_types': [entry.status]  # Track what types of statuses occurred
                 }
+            elif is_incident and current_incident is not None:
+                # Continue current incident, update error message if needed
+                if entry.error_message and not current_incident['error_message']:
+                    current_incident['error_message'] = entry.error_message
+                # Track status types
+                if entry.status not in current_incident['status_types']:
+                    current_incident['status_types'].append(entry.status)
             elif entry.status == 'up' and current_incident is not None:
-                # End of current incident
+                # End of current incident (service is back up)
                 current_incident['end_time'] = entry.timestamp
                 duration = current_incident['end_time'] - current_incident['start_time']
                 current_incident['duration_minutes'] = round(duration.total_seconds() / 60, 1)
                 current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M')
                 current_incident['end_time_formatted'] = current_incident['end_time'].strftime('%b %d, %Y %H:%M')
+                
+                # Create a readable status description
+                if len(current_incident['status_types']) == 1:
+                    current_incident['status_desc'] = current_incident['status_types'][0].title()
+                else:
+                    current_incident['status_desc'] = 'Mixed (' + ', '.join(s.title() for s in current_incident['status_types']) + ')'
+                
                 incidents.append(current_incident)
                 current_incident = None
         
@@ -169,29 +189,59 @@ class ConnectionHistory(db.Model):
             current_incident['ongoing'] = True
             current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M')
             current_incident['end_time_formatted'] = None
+            
+            # Create a readable status description for ongoing incident
+            if len(current_incident['status_types']) == 1:
+                current_incident['status_desc'] = current_incident['status_types'][0].title()
+            else:
+                current_incident['status_desc'] = 'Mixed (' + ', '.join(s.title() for s in current_incident['status_types']) + ')'
+            
             incidents.append(current_incident)
         
         return incidents
+
     
+
     @staticmethod
-    def _calculate_daily_stats(entries, days):
+    def _count_incidents_for_date(target_date, incidents):
+        """Count how many incidents occurred on a specific date."""
+        count = 0
+        for incident in incidents:
+            incident_start_date = incident['start_time'].date()
+            incident_end_date = incident.get('end_time')
+            if incident_end_date:
+                incident_end_date = incident_end_date.date()
+            else:
+                incident_end_date = datetime.utcnow().date()  # Ongoing incident
+            
+            # Check if this incident spans the target date
+            if incident_start_date <= target_date <= incident_end_date:
+                count += 1
+        return count
+
+    @staticmethod
+    def _calculate_daily_stats(entries, days, incidents=None):
         """Calculate daily statistics from history entries."""
-        daily_data = defaultdict(lambda: {'up': 0, 'down': 0, 'response_times': []})
+        daily_data = defaultdict(lambda: {'up': 0, 'down': 0, 'unknown': 0, 'response_times': []})
         
         for entry in entries:
             day_key = entry.timestamp.date()
-            daily_data[day_key][entry.status] += 1
+            # Count all statuses
+            if entry.status in ['up', 'down', 'unknown']:
+                daily_data[day_key][entry.status] += 1
             if entry.response_time and entry.status == 'up':
                 daily_data[day_key]['response_times'].append(entry.response_time)
         
         # Generate complete daily stats for the period
         daily_stats = []
-        start_date = (datetime.utcnow() - timedelta(days=days)).date()
+        start_date = (datetime.utcnow() - timedelta(days=days-1)).date()
         
         for i in range(days):
             current_date = start_date + timedelta(days=i)
             day_data = daily_data[current_date]
-            total_checks = day_data['up'] + day_data['down']
+            
+            # Count all checks including unknown status
+            total_checks = day_data['up'] + day_data['down'] + day_data['unknown']
             uptime = (day_data['up'] / total_checks * 100) if total_checks > 0 else 0
             avg_response = sum(day_data['response_times']) / len(day_data['response_times']) if day_data['response_times'] else None
             
@@ -201,11 +251,77 @@ class ConnectionHistory(db.Model):
                 'total_checks': total_checks,
                 'uptime_percentage': round(uptime, 1),
                 'avg_response_time': round(avg_response, 2) if avg_response else None,
-                'incidents_count': 1 if day_data['down'] > 0 else 0
+                'incidents_count': ConnectionHistory._count_incidents_for_date(current_date, incidents or [])
             })
         
         return daily_stats
     
+
+    @staticmethod
+    def get_debug_info(connection_id, days=7):
+        """Get debug information about data for a connection."""
+        cutoff_time = datetime.utcnow() - timedelta(days=days)
+        entries = ConnectionHistory.query.filter(
+            ConnectionHistory.connection_id == connection_id,
+            ConnectionHistory.timestamp >= cutoff_time
+        ).order_by(ConnectionHistory.timestamp.asc()).all()
+        
+        debug_info = {
+            'total_entries': len(entries),
+            'entries_by_status': {'up': 0, 'down': 0, 'unknown': 0},
+            'entries_by_date': {},
+            'date_range': f"{cutoff_time.date()} to {datetime.utcnow().date()}"
+        }
+        
+        for entry in entries:
+            debug_info['entries_by_status'][entry.status] += 1
+            date_key = entry.timestamp.date().isoformat()
+            if date_key not in debug_info['entries_by_date']:
+                debug_info['entries_by_date'][date_key] = {'up': 0, 'down': 0, 'unknown': 0}
+            debug_info['entries_by_date'][date_key][entry.status] += 1
+        
+        return debug_info
+    
+    @staticmethod
+    def create_sample_data(connection_id, days=7):
+        """Create sample data for testing (only if no data exists)."""
+        existing_count = ConnectionHistory.query.filter_by(connection_id=connection_id).count()
+        if existing_count > 0:
+            return f"Connection {connection_id} already has {existing_count} entries"
+        
+        import random
+        from datetime import datetime, timedelta
+        
+        # Create sample data for the past week
+        entries_created = 0
+        for day in range(days):
+            current_date = datetime.utcnow() - timedelta(days=(days-1-day))
+            
+            # Create ~144 entries per day (every 10 minutes)
+            for minute in range(0, 1440, 10):  # Every 10 minutes
+                timestamp = current_date.replace(hour=0, minute=0, second=0) + timedelta(minutes=minute)
+                
+                # 95% uptime, 5% issues
+                if random.random() < 0.95:
+                    status = 'up'
+                    response_time = random.uniform(50, 200)  # 50-200ms
+                else:
+                    status = 'down' if random.random() < 0.8 else 'unknown'
+                    response_time = None
+                
+                entry = ConnectionHistory(
+                    connection_id=connection_id,
+                    status=status,
+                    response_time=response_time,
+                    error_message=f"Simulated {status} status" if status != 'up' else None
+                )
+                entry.timestamp = timestamp
+                db.session.add(entry)
+                entries_created += 1
+        
+        db.session.commit()
+        return f"Created {entries_created} sample entries for connection {connection_id}"
+
     def to_dict(self):
         """Convert history entry to dictionary."""
         return {

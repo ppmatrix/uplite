@@ -84,6 +84,34 @@ def settings():
     return render_template('dashboard/settings.html')
 
 
+
+
+@bp.route('/connections/<int:connection_id>/debug')
+@login_required
+def connection_debug(connection_id):
+    """Debug endpoint to see connection data status."""
+    connection = Connection.query.get_or_404(connection_id)
+    debug_info = ConnectionHistory.get_debug_info(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'debug_info': debug_info
+    })
+
+@bp.route('/connections/<int:connection_id>/create-sample-data')
+@login_required  
+def create_sample_data(connection_id):
+    """Create sample data for testing purposes."""
+    connection = Connection.query.get_or_404(connection_id)
+    result = ConnectionHistory.create_sample_data(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'result': result
+    })
+
 def _create_default_widgets(user_id):
     """Create default widgets for a new user."""
     from ..config.settings import Config

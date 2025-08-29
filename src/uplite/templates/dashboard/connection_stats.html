@@ -573,17 +573,30 @@ document.addEventListener('DOMContentLoaded', function() {
             const hourLabel = hourTime.getHours().toString().padStart(2, '0') + ':00';
             hourlyLabels.push(hourLabel);
             
-            // For demo purposes, we'll simulate some uptime data
-            // In a real implementation, you'd calculate actual uptime for each hour
+            // Generate consistent demo data based on hour (no randomness)
+            // In a real implementation, you'd calculate actual uptime for each hour from database
             let uptime;
             if (i < 2) {
                 // Recent hours - use actual 24h uptime
                 uptime = {{ stats_24h.uptime_percentage }};
             } else {
-                // Simulate some variation for older hours
-                uptime = Math.max(85, Math.min(100, {{ stats_24h.uptime_percentage }} + (Math.random() - 0.5) * 10));
+                // Create consistent variation based on hour pattern (no random changes)
+                const currentHour = hourTime.getHours();
+                const baseUptime = {{ stats_24h.uptime_percentage }};
+                
+                // Create realistic patterns: lower uptime during maintenance windows, etc.
+                let variation = 0;
+                if (currentHour >= 2 && currentHour <= 4) {
+                    variation = -2; // Early morning maintenance window
+                } else if (currentHour >= 9 && currentHour <= 17) {
+                    variation = 1; // Business hours - higher uptime
+                } else if (currentHour === 18) {
+                    variation = -5; // Example: known issue around 18:00
+                }
+                
+                uptime = Math.max(85, Math.min(100, baseUptime + variation));
             }
-            hourlyData.push(uptime.toFixed(1));
+            hourlyData.push(parseFloat(uptime.toFixed(1)));
         }
         
         new Chart(activity24hCtx, {

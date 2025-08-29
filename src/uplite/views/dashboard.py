@@ -1,11 +1,12 @@
 """Dashboard views for UpLite."""
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, abort
 from flask_login import login_required, current_user
 
 from ..app import db
 from ..models.connection import Connection
 from ..models.widget_config import WidgetConfig
+from ..models.connection_history import ConnectionHistory
 from ..widgets.widget_manager import WidgetManager
 
 bp = Blueprint('dashboard', __name__)
@@ -42,6 +43,24 @@ def connections():
     # ORDER BY created_at for consistent display
     connections = Connection.query.order_by(Connection.position).all()
     return render_template('dashboard/connections.html', connections=connections)
+
+
+@bp.route('/connections/<int:connection_id>/statistics')
+@login_required
+def connection_statistics(connection_id):
+    """Statistics page for a specific connection."""
+    connection = Connection.query.get_or_404(connection_id)
+    
+    # Get statistics for different periods
+    stats_7d = ConnectionHistory.get_connection_statistics(connection_id, days=7)
+    stats_24h = ConnectionHistory.get_connection_statistics(connection_id, days=1)
+    
+    return render_template(
+        'dashboard/connection_stats.html',
+        connection=connection,
+        stats_7d=stats_7d,
+        stats_24h=stats_24h
+    )
 
 
 @bp.route('/widgets')

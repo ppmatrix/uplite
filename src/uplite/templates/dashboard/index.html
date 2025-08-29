@@ -183,6 +183,33 @@
     background: rgba(108, 117, 125, 0.1);
 }
 
+
+.connection-stats-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.connection-stats-btn:hover {
+    background: #fff;
+    color: #0d6efd;
+    transform: scale(1.05);
+    text-decoration: none;
+}
+
+.connection-item {
+    position: relative;
+}
+
 .connection-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -646,6 +673,9 @@ function renderConnectionMonitor(data, container) {
         connectionsHtml += `
         <div class="col-lg-4 col-md-6 col-sm-12 mb-3">
             <div class="connection-item ${statusClass}" data-url="${buildConnectionUrl(conn)}" data-name="${conn.name}">
+                <a href="/dashboard/connections/${conn.id}/statistics" class="connection-stats-btn" title="View Statistics" onclick="event.stopPropagation();">
+                    <i class="bi bi-graph-up"></i>
+                </a>
                 <div class="connection-column connection-logo">
                     ${conn.logo_filename ? `<img src="/static/images/connections/${conn.logo_filename}" alt="${conn.name}" class="connection-logo-img">` : ""}
                 </div>

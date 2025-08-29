@@ -394,6 +394,9 @@ p.card-text {
                     <button class="btn btn-sm btn-primary" onclick="checkConnection({{ connection.id }})">
                         <i class="bi bi-arrow-clockwise"></i> Check Now
                     </button>
+                    <a href="{{ url_for('dashboard.connection_statistics', connection_id=connection.id) }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-graph-up"></i> Statistics
+                    </a>
                     <button class="btn btn-sm btn-outline-warning" onclick="editConnection({{ connection.id }})">
                         <i class="bi bi-pencil"></i> Edit
                     </button>

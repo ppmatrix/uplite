@@ -100,6 +100,56 @@ def connection_debug(connection_id):
     })
 
 @bp.route('/connections/<int:connection_id>/create-sample-data')
+
+@bp.route('/connections/<int:connection_id>/debug-incidents')
+@login_required  
+def debug_incidents(connection_id):
+    """Debug incident calculation in detail."""
+    connection = Connection.query.get_or_404(connection_id)
+    
+    # Get recent entries for debugging
+    from datetime import datetime, timedelta
+    cutoff_time = datetime.utcnow() - timedelta(days=2)
+    entries = ConnectionHistory.query.filter_by(connection_id=connection_id)\
+                                   .filter(ConnectionHistory.timestamp >= cutoff_time)\
+                                   .order_by(ConnectionHistory.timestamp.desc())\
+                                   .limit(50).all()
+    
+    # Show raw entries
+    raw_data = []
+    for entry in reversed(entries):  # Show chronologically
+        raw_data.append({
+            'timestamp': entry.timestamp.strftime('%m/%d %H:%M:%S'),
+            'status': entry.status,
+            'error': entry.error_message or 'None'
+        })
+    
+    # Calculate incidents with our new method
+    incidents = ConnectionHistory._calculate_incidents(reversed(entries))
+    
+    # Show calculated incidents
+    incident_data = []
+    for i, incident in enumerate(incidents, 1):
+        incident_data.append({
+            'number': i,
+            'status_types': incident['status_types'],
+            'status_desc': incident['status_desc'],
+            'duration_min': incident['duration_minutes'],
+            'start': incident['start_time_formatted'],
+            'end': incident.get('end_time_formatted', 'Ongoing'),
+            'ongoing': incident.get('ongoing', False)
+        })
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'total_entries': len(raw_data),
+        'total_incidents': len(incidents),
+        'raw_entries': raw_data,
+        'calculated_incidents': incident_data
+    })
+
+
 @login_required  
 def create_sample_data(connection_id):
     """Create sample data for testing purposes."""

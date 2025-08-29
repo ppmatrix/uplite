@@ -169,8 +169,8 @@ class ConnectionHistory(db.Model):
                 current_incident['end_time'] = entry.timestamp
                 duration = current_incident['end_time'] - current_incident['start_time']
                 current_incident['duration_minutes'] = round(duration.total_seconds() / 60, 1)
-                current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M')
-                current_incident['end_time_formatted'] = current_incident['end_time'].strftime('%b %d, %Y %H:%M')
+                current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M:%S')
+                current_incident['end_time_formatted'] = current_incident['end_time'].strftime('%b %d, %Y %H:%M:%S')
                 
                 # Create a readable status description
                 if len(current_incident['status_types']) == 1:
@@ -187,7 +187,7 @@ class ConnectionHistory(db.Model):
             duration = current_incident['end_time'] - current_incident['start_time']
             current_incident['duration_minutes'] = round(duration.total_seconds() / 60, 1)
             current_incident['ongoing'] = True
-            current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M')
+            current_incident['start_time_formatted'] = current_incident['start_time'].strftime('%b %d, %Y %H:%M:%S')
             current_incident['end_time_formatted'] = None
             
             # Create a readable status description for ongoing incident

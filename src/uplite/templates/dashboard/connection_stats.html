@@ -473,7 +473,7 @@
         <div class="row charts-row">
             <div class="col-md-12">
                 <div class="stat-card">
-                    <h5 class="chart-title"><i class="bi bi-graph-up-arrow"></i> Last Hour Minute Breakdown</h5>
+                    <h5 class="chart-title"><i class="bi bi-graph-up-arrow"></i> Last Hour Status Monitor</h5>
                     <div class="chart-container">
                         <canvas id="activity1hChart"></canvas>
                     </div>
@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     {% if stats_1h.total_checks > 0 %}
-    // Last Hour Minute Breakdown Chart
+    // Last Hour Status Monitor Chart
     const activity1hCtx = document.getElementById('activity1hChart');
     if (activity1hCtx) {
         // Generate minute-by-minute data for the last 60 minutes

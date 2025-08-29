@@ -294,9 +294,9 @@
                                 <div>
                                     <strong>
                                         {% if incident.get('ongoing') %}
-                                        <i class="bi bi-exclamation-circle text-danger"></i> Ongoing Incident ({{ incident.status_desc|default:"Unknown" }})
+                                        <i class="bi bi-exclamation-circle text-danger"></i> Ongoing Incident ({{ incident.status_desc|default("Unknown") }})
                                         {% else %}
-                                        <i class="bi bi-clock-history"></i> Resolved ({{ incident.status_desc|default:"Unknown" }})
+                                        <i class="bi bi-clock-history"></i> Resolved ({{ incident.status_desc|default("Unknown") }})
                                         {% endif %}
                                     </strong>
                                     <p class="mb-1">
@@ -389,9 +389,9 @@
                                 <div>
                                     <strong>
                                         {% if incident.get('ongoing') %}
-                                        <i class="bi bi-exclamation-circle text-danger"></i> Ongoing ({{ incident.status_desc|default:"Unknown" }})
+                                        <i class="bi bi-exclamation-circle text-danger"></i> Ongoing ({{ incident.status_desc|default("Unknown") }})
                                         {% else %}
-                                        <i class="bi bi-check-circle text-success"></i> Resolved ({{ incident.status_desc|default:"Unknown" }})
+                                        <i class="bi bi-check-circle text-success"></i> Resolved ({{ incident.status_desc|default("Unknown") }})
                                         {% endif %}
                                     </strong>
                                     <p class="mb-1">

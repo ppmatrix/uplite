@@ -436,16 +436,7 @@
 
     <!-- Last Hour Tab -->
     <div class="tab-pane fade" id="hour-stats" role="tabpanel">
-        <!-- DEBUG INFO (remove after testing) -->
-        <div class="alert alert-info mb-3">
-            <h6>Debug Info:</h6>
-            <p><strong>Stats 1h exists:</strong> {{ 'Yes' if stats_1h else 'No' }}</p>
-            {% if stats_1h %}
-            <p><strong>Total checks:</strong> {{ stats_1h.total_checks }}</p>
-            <p><strong>Uptime:</strong> {{ stats_1h.uptime_percentage }}%</p>
-            <p><strong>Incidents:</strong> {{ stats_1h.incidents|length }}</p>
-            {% endif %}
-        </div>
+
         <!-- Summary Cards -->
         <div class="row stats-overview mb-4">
             <div class="col-md-3">

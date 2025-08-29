@@ -54,12 +54,14 @@ def connection_statistics(connection_id):
     # Get statistics for different periods
     stats_7d = ConnectionHistory.get_connection_statistics(connection_id, days=7)
     stats_24h = ConnectionHistory.get_connection_statistics(connection_id, days=1)
+    stats_1h = ConnectionHistory.get_connection_statistics(connection_id, days=1/24)  # 1 hour = 1/24 of a day
     
     return render_template(
         'dashboard/connection_stats.html',
         connection=connection,
         stats_7d=stats_7d,
-        stats_24h=stats_24h
+        stats_24h=stats_24h,
+        stats_1h=stats_1h,
     )
 
 

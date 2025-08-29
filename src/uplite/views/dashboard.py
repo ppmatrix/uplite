@@ -120,11 +120,11 @@ def debug_incidents(connection_id):
     
     # Get recent entries for debugging
     from datetime import datetime, timedelta
-    cutoff_time = datetime.utcnow() - timedelta(days=2)
+    cutoff_time = datetime.utcnow() - timedelta(days=7)
     entries = ConnectionHistory.query.filter_by(connection_id=connection_id)\
                                    .filter(ConnectionHistory.timestamp >= cutoff_time)\
                                    .order_by(ConnectionHistory.timestamp.desc())\
-                                   .limit(50).all()
+                                   .limit(200).all()
     
     # Show raw entries
     raw_data = []

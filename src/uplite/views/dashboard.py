@@ -100,6 +100,17 @@ def connection_debug(connection_id):
     })
 
 @bp.route('/connections/<int:connection_id>/create-sample-data')
+@login_required  
+def create_sample_data(connection_id):
+    """Create sample data for testing purposes."""
+    connection = Connection.query.get_or_404(connection_id)
+    result = ConnectionHistory.create_sample_data(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'result': result
+    })
 
 @bp.route('/connections/<int:connection_id>/debug-incidents')
 @login_required  

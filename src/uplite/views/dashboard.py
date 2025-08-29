@@ -54,7 +54,42 @@ def connection_statistics(connection_id):
     # Get statistics for different periods
     stats_7d = ConnectionHistory.get_connection_statistics(connection_id, days=7)
     stats_24h = ConnectionHistory.get_connection_statistics(connection_id, days=1)
-    stats_1h = ConnectionHistory.get_connection_statistics(connection_id, days=1/24)  # 1 hour = 1/24 of a day
+    # Get 1-hour statistics (use 1 day but only show last hour data)
+    from datetime import datetime, timedelta
+    cutoff_time = datetime.utcnow() - timedelta(hours=1)
+    entries_1h = ConnectionHistory.query.filter(
+        ConnectionHistory.connection_id == connection_id,
+        ConnectionHistory.timestamp >= cutoff_time
+    ).order_by(ConnectionHistory.timestamp.asc()).all()
+    
+    # Calculate 1-hour stats manually
+    if entries_1h:
+        total_checks = len(entries_1h)
+        up_checks = sum(1 for e in entries_1h if e.status == 'up')
+        uptime_percentage = (up_checks / total_checks * 100) if total_checks > 0 else 0
+        
+        valid_response_times = [e.response_time for e in entries_1h if e.response_time is not None and e.status == 'up']
+        avg_response_time = sum(valid_response_times) / len(valid_response_times) if valid_response_times else None
+        
+        incidents_1h = ConnectionHistory._calculate_incidents(entries_1h)
+        
+        stats_1h = {
+            'total_checks': total_checks,
+            'uptime_percentage': round(uptime_percentage, 2),
+            'avg_response_time': round(avg_response_time, 2) if avg_response_time else None,
+            'incidents': incidents_1h,
+            'period_start': cutoff_time,
+            'period_end': datetime.utcnow()
+        }
+    else:
+        stats_1h = {
+            'total_checks': 0,
+            'uptime_percentage': 0,
+            'avg_response_time': None,
+            'incidents': [],
+            'period_start': cutoff_time,
+            'period_end': datetime.utcnow()
+        }
     
     return render_template(
         'dashboard/connection_stats.html',

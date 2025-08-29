@@ -521,16 +521,14 @@ function renderConnectionMonitor(data, container) {
     const summaryHtml = `
         <div class="connection-summary">
             <div class="alert alert-${overallStatus} d-flex justify-content-between align-items-center">
-                <div>
-                    <strong><i class="bi bi-hdd-network"></i> ${overallMessage}</strong>
-                    <div class="mt-2">
-                        <small>
-                            <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
-                            <span class="badge bg-success me-2">Up: ${upCount}</span>
-                            ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
-                            ${data.connections.filter(conn => conn.last_status === 'unknown').length > 0 ? `<span class="badge bg-warning me-2">Unknown: ${data.connections.filter(conn => conn.last_status === 'unknown').length}</span>` : ''}
-                        </small>
-                    </div>
+                <div class="d-flex align-items-center">
+                    <strong class="me-3"><i class="bi bi-hdd-network"></i> ${overallMessage}</strong>
+                    <small>
+                        <span class="badge bg-secondary me-2">Total: ${totalCount}</span>
+                        <span class="badge bg-success me-2">Up: ${upCount}</span>
+                        ${downCount > 0 ? `<span class="badge bg-danger me-2">Down: ${downCount}</span>` : ''}
+                        ${data.connections.filter(conn => conn.last_status === 'unknown').length > 0 ? `<span class="badge bg-warning me-2">Unknown: ${data.connections.filter(conn => conn.last_status === 'unknown').length}</span>` : ''}
+                    </small>
                 </div>
                 <div class="text-end">
                     <small class="text-muted">
@@ -784,15 +782,13 @@ function renderServiceStatus(data, container) {
     const summaryHtml = `
         <div class="service-summary mb-3">
             <div class="alert alert-${data.summary.overall_status} d-flex justify-content-between align-items-center">
-                <div>
-                    <strong><i class="bi bi-gear"></i> Service Status</strong>
-                    <div class="mt-2">
-                        <small>
-                            <span class="badge bg-secondary me-2">Total: ${data.summary.total}</span>
-                            <span class="badge bg-success me-2">Running: ${data.summary.running}</span>
-                            ${data.summary.stopped > 0 ? `<span class="badge bg-danger me-2">Stopped: ${data.summary.stopped}</span>` : ''}
-                        </small>
-                    </div>
+                <div class="d-flex align-items-center">
+                    <strong class="me-3"><i class="bi bi-gear"></i> Service Status</strong>
+                    <small>
+                        <span class="badge bg-secondary me-2">Total: ${data.summary.total}</span>
+                        <span class="badge bg-success me-2">Running: ${data.summary.running}</span>
+                        ${data.summary.stopped > 0 ? `<span class="badge bg-danger me-2">Stopped: ${data.summary.stopped}</span>` : ''}
+                    </small>
                 </div>
                 <div class="text-end">
                     <small class="text-muted">

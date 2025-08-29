@@ -428,6 +428,32 @@
 
 {% block scripts %}
 <script>
+
+// Tab preservation functions
+function saveActiveTab() {
+    const activeTab = document.querySelector('.nav-link.active');
+    if (activeTab) {
+        const tabId = activeTab.getAttribute('data-bs-target') || activeTab.getAttribute('href');
+        localStorage.setItem('activeStatsTab', tabId);
+    }
+}
+
+function restoreActiveTab() {
+    const savedTabId = localStorage.getItem('activeStatsTab');
+    if (savedTabId) {
+        const tabTrigger = document.querySelector(`[data-bs-target="${savedTabId}"], [href="${savedTabId}"]`);
+        if (tabTrigger) {
+            const tab = new bootstrap.Tab(tabTrigger);
+            tab.show();
+        }
+    }
+}
+
+function refreshWithTabPreservation() {
+    saveActiveTab();
+    location.reload();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Chart.js configuration
     Chart.defaults.responsive = true;
@@ -642,38 +668,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     {% endif %}
     
-        // Tab-preserving auto-refresh implemented below
-// Save active tab to localStorage before refresh
-function saveActiveTab() {
-    const activeTab = document.querySelector('.nav-link.active');
-    if (activeTab) {
-        const tabId = activeTab.getAttribute('data-bs-target') || activeTab.getAttribute('href');
-        localStorage.setItem('activeStatsTab', tabId);
-    }
-}
-
-// Restore active tab after page load
-function restoreActiveTab() {
-    const savedTabId = localStorage.getItem('activeStatsTab');
-    if (savedTabId) {
-        // Find the tab trigger
-        const tabTrigger = document.querySelector(`[data-bs-target="${savedTabId}"], [href="${savedTabId}"]`);
-        if (tabTrigger) {
-            // Create bootstrap tab instance and show it
-            const tab = new bootstrap.Tab(tabTrigger);
-            tab.show();
-        }
-    }
-}
-
-// Auto-refresh with tab preservation
-function refreshWithTabPreservation() {
-    saveActiveTab();
-    location.reload();
-}
-
-// Set up tab state saving on tab changes
-document.addEventListener('DOMContentLoaded', function() {
     // Restore tab state on page load
     restoreActiveTab();
     
@@ -686,6 +680,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-refresh every 60 seconds with tab preservation
     setInterval(refreshWithTabPreservation, 60000);
 });
-
 </script>
 {% endblock %}

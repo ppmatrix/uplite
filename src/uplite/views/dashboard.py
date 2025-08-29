@@ -123,12 +123,12 @@ def debug_incidents(connection_id):
     cutoff_time = datetime.utcnow() - timedelta(days=7)
     entries = ConnectionHistory.query.filter_by(connection_id=connection_id)\
                                    .filter(ConnectionHistory.timestamp >= cutoff_time)\
-                                   .order_by(ConnectionHistory.timestamp.desc())\
+                                   .order_by(ConnectionHistory.timestamp.asc())\
                                    .limit(200).all()
     
     # Show raw entries
     raw_data = []
-    for entry in reversed(entries):  # Show chronologically
+    for entry in entries:  # Show chronologically (query is already asc)
         raw_data.append({
             'timestamp': entry.timestamp.strftime('%m/%d %H:%M:%S'),
             'status': entry.status,
@@ -136,7 +136,7 @@ def debug_incidents(connection_id):
         })
     
     # Calculate incidents with our new method
-    incidents = ConnectionHistory._calculate_incidents(reversed(entries))
+    incidents = ConnectionHistory._calculate_incidents(entries)
     
     # Show calculated incidents
     incident_data = []

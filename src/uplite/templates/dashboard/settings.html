@@ -1,0 +1,288 @@
+<!-- Settings Template -->
+{% extends "base.html" %}
+
+{% block title %}Settings - UpLite{% endblock %}
+
+{% block head %}
+<style>
+.settings-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.settings-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.settings-header {
+    background: var(--widget-header-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 15px 20px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-color);
+}
+
+.settings-body {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+
+
+
+
+.form-group input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--primary-color, #007bff);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover, #0056b3);
+}
+
+.btn-secondary {
+    background: var(--secondary-color, #6c757d);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: var(--secondary-hover, #545b62);
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.info-text {
+    color: var(--text-muted, #6c757d);
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color, #007bff);
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted, #6c757d);
+    margin-top: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h1 style="margin-bottom: 30px; color: var(--text-color);">Settings</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Profile Settings -->
+    <div class="settings-section">
+        <div class="settings-header">
+            <i class="fas fa-user"></i> Profile Settings
+        </div>
+        <div class="settings-body">
+            <form method="POST" action="{{ url_for('dashboard.update_profile') }}">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
+                    <div class="info-text">Your unique username for login</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                    <div class="info-text">Your email address for notifications and recovery</div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Security Settings -->
+    <div class="settings-section">
+        <div class="settings-header">
+            <i class="fas fa-lock"></i> Security Settings
+        </div>
+        <div class="settings-body">
+            <form method="POST" action="{{ url_for('dashboard.change_password') }}">
+                <div class="form-group">
+                    <label for="current_password">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="new_password">New Password</label>
+                    <input type="password" class="form-control" id="new_password" name="new_password" required>
+                    <div class="info-text">Password must be at least 8 characters long</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm New Password</label>
+                    <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Account Information -->
+    <div class="settings-section">
+        <div class="settings-header">
+            <i class="fas fa-info-circle"></i> Account Information
+        </div>
+        <div class="settings-body">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">{{ current_user.id }}</span>
+                    <div class="stat-label">User ID</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ 'Yes' if current_user.is_admin else 'No' }}</span>
+                    <div class="stat-label">Admin User</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ current_user.created_at.strftime('%Y-%m-%d') if current_user.created_at else 'N/A' }}</span>
+                    <div class="stat-label">Member Since</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ current_user.last_login.strftime('%Y-%m-%d') if current_user.last_login else 'Never' }}</span>
+                    <div class="stat-label">Last Login</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Application Settings -->
+    <div class="settings-section">
+        <div class="settings-header">
+            <i class="fas fa-cog"></i> Application Settings
+        </div>
+        <div class="settings-body">
+            <form method="POST" action="{{ url_for('dashboard.update_app_settings') }}">
+                <div class="form-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme" name="theme" class="form-select">
+                        <option value="light" {{ "selected" if session.get("theme", "light") == "light" else "" }}>Light</option>
+                        <option value="dark" {{ "selected" if session.get("theme", "light") == "dark" else "" }}>Dark</option>
+                        <option value="auto" {{ "selected" if session.get("theme", "light") == "auto" else "" }}>Auto (System)</option>
+                    </select>
+                    <div class="info-text">Choose your preferred theme</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="refresh_interval">Dashboard Refresh Interval (seconds)</label>
+                    <input type="number" class="form-control" id="refresh_interval" name="refresh_interval" value="{{ session.get("refresh_interval", 30) }}" min="5" max="300">
+                    <div class="info-text">How often the dashboard should refresh data (5-300 seconds)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="email_notifications" name="email_notifications" {{ "checked" if session.get("email_notifications", True) else "" }}>
+                        <label class="form-check-label" for="email_notifications">
+                            Enable email notifications
+                        </label>
+                    </div>
+                    <div class="info-text">Receive email alerts for important events</div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function resetToDefaults() {
+    if (confirm('Are you sure you want to reset all settings to their default values?')) {
+        document.getElementById('theme').value = 'light';
+        document.getElementById('refresh_interval').value = '30';
+        document.querySelector('input[name="email_notifications"]').checked = true;
+    }
+}
+</script>
+{% endblock %}

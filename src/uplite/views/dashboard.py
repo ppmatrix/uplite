@@ -238,3 +238,126 @@ def _get_default_widget_title(widget_type):
         'logs_viewer': 'Logs Viewer'
     }
     return titles.get(widget_type, widget_type.replace('_', ' ').title())
+
+
+@bp.route('/settings/profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile settings."""
+    from flask import flash, redirect, url_for
+    
+    username = request.form.get('username', '').strip()
+    email = request.form.get('email', '').strip()
+    
+    if not username or not email:
+        flash('Username and email are required.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Check if username is already taken by another user
+    existing_user = db.session.query(db.exists().where(
+        db.and_(
+            current_user.__class__.username == username,
+            current_user.__class__.id != current_user.id
+        )
+    )).scalar()
+    
+    if existing_user:
+        flash('Username is already taken.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Check if email is already taken by another user
+    existing_email = db.session.query(db.exists().where(
+        db.and_(
+            current_user.__class__.email == email,
+            current_user.__class__.id != current_user.id
+        )
+    )).scalar()
+    
+    if existing_email:
+        flash('Email is already taken.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Update profile
+    current_user.username = username
+    current_user.email = email
+    
+    try:
+        db.session.commit()
+        flash('Profile updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error updating profile. Please try again.', 'error')
+    
+    return redirect(url_for('dashboard.settings'))
+
+
+@bp.route('/settings/password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password."""
+    from flask import flash, redirect, url_for
+    
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+    
+    # Validate inputs
+    if not all([current_password, new_password, confirm_password]):
+        flash('All password fields are required.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Check current password
+    if not current_user.check_password(current_password):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Check new password length
+    if len(new_password) < 8:
+        flash('New password must be at least 8 characters long.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Check password confirmation
+    if new_password != confirm_password:
+        flash('New passwords do not match.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Update password
+    current_user.set_password(new_password)
+    
+    try:
+        db.session.commit()
+        flash('Password changed successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error changing password. Please try again.', 'error')
+    
+    return redirect(url_for('dashboard.settings'))
+
+
+@bp.route('/settings/app', methods=['POST'])
+@login_required
+def update_app_settings():
+    """Update application settings."""
+    from flask import flash, redirect, url_for, session
+    
+    theme = request.form.get('theme', 'light')
+    refresh_interval = request.form.get('refresh_interval', '30')
+    email_notifications = request.form.get('email_notifications') == 'on'
+    
+    # Validate refresh interval
+    try:
+        refresh_interval_int = int(refresh_interval)
+        if refresh_interval_int < 5 or refresh_interval_int > 300:
+            flash('Refresh interval must be between 5 and 300 seconds.', 'error')
+            return redirect(url_for('dashboard.settings'))
+    except ValueError:
+        flash('Invalid refresh interval.', 'error')
+        return redirect(url_for('dashboard.settings'))
+    
+    # Store settings in session (you could also create a UserSettings model)
+    session['theme'] = theme
+    session['refresh_interval'] = refresh_interval_int
+    session['email_notifications'] = email_notifications
+    
+    flash('Settings saved successfully!', 'success')
+    return redirect(url_for('dashboard.settings'))

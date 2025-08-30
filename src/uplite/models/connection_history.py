@@ -57,7 +57,6 @@ class ConnectionHistory(db.Model):
         deleted_count = query.count()
         if deleted_count > 0:
             query.delete()
-            print(f"Cleaned up {deleted_count} old history entries for connection {connection_id or 'all'}")
     
     @staticmethod
     def get_median_response_time(connection_id, periods=10):

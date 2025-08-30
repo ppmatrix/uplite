@@ -37,7 +37,7 @@
 
 body {
     background-color: var(--bg-color);
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: background-color 0.3s ease, color 0.3s ease;
     padding-top: 76px !important; /* Account for fixed navbar */
 }
@@ -56,7 +56,7 @@ body {
 .card {
     border: none;
     background-color: var(--bg-secondary);
-    color: var(--text-color);
+    color: var(--navbar-text);
     box-shadow: 0 0.125rem 0.25rem var(--shadow);
     transition: box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
@@ -67,7 +67,7 @@ body {
 
 .widget {
     background: var(--bg-secondary);
-    color: var(--text-color);
+    color: var(--navbar-text);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow);
     margin-bottom: 1.5rem;
@@ -85,7 +85,7 @@ body {
     border-radius: 8px 8px 0 0;
     padding: 1rem 1.25rem;
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -139,7 +139,7 @@ body {
     padding: 1.5rem;
     margin-bottom: 1rem;
     background: var(--bg-secondary);
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: all 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -153,7 +153,7 @@ body {
     font-weight: 700;
     line-height: 1;
     margin-bottom: 0.5rem;
-    color: var(--text-color);
+    color: var(--navbar-text);
 }
 
 .metric-label {
@@ -205,7 +205,7 @@ body {
 
 .list-group-item {
     background-color: var(--bg-secondary);
-    color: var(--text-color);
+    color: var(--navbar-text);
     border: 1px solid var(--border-color);
     transition: background-color 0.15s ease-in-out, color 0.3s ease;
 }
@@ -215,10 +215,17 @@ body {
 }
 
 /* Theme Toggle Button */
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+    color: #ffffff !important;
+}
+
 .theme-toggle {
     background: none;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
+    border: 1px solid var(--border-color);
+    color: var(--navbar-text);
     border-radius: 6px;
     padding: 0.25rem 0.5rem;
     margin-left: 0.5rem;
@@ -226,20 +233,23 @@ body {
 }
 
 .theme-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-    border-color: rgba(255, 255, 255, 0.5);
+    background-color: var(--bg-tertiary);
+    color: var(--navbar-text);
 }
 
-.theme-toggle:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1);
+/* Dark mode theme toggle visibility */
+[data-theme="dark"] .theme-toggle {
+    border-color: #6b7280;
+    background-color: rgba(107, 114, 128, 0.1);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+    border-color: #9ca3af;
+    background-color: rgba(156, 163, 175, 0.2);
 }
 
 .theme-toggle i {
     font-size: 1.1rem;
-    color: #ffffff;
 }
 
 /* Loading animations */
@@ -271,7 +281,7 @@ body {
     background: var(--widget-header-bg);
     border-bottom: 1px solid var(--border-color);
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: background 0.3s ease, color 0.3s ease;
 }
 
@@ -286,28 +296,28 @@ body {
 
 .modal-content {
     background-color: var(--bg-secondary);
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .modal-header {
     background: var(--widget-header-bg);
     border-bottom: 2px solid var(--border-color);
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: background 0.3s ease, color 0.3s ease;
 }
 
 .form-control, .form-select {
     background-color: var(--bg-secondary);
     border-color: var(--border-color);
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: all 0.3s ease;
 }
 
 .form-control:focus, .form-select:focus {
     background-color: var(--bg-secondary);
     border-color: var(--primary-color);
-    color: var(--text-color);
+    color: var(--navbar-text);
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
@@ -363,13 +373,13 @@ body {
 }
 
 .dropdown-item {
-    color: var(--text-color);
+    color: var(--navbar-text);
     transition: color 0.3s ease, background-color 0.3s ease;
 }
 
 .dropdown-item:hover {
     background-color: var(--bg-tertiary);
-    color: var(--text-color);
+    color: var(--navbar-text);
 }
 
 .dropdown-divider {
@@ -495,7 +505,7 @@ p, h1, h2, h3, h4, h5, h6, span, div {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px var(--shadow-hover);
     text-decoration: none;
-    color: var(--text-color);
+    color: var(--navbar-text);
 }
 
 .connection-item.status-up:hover {
@@ -804,7 +814,7 @@ main.container-fluid {
 .section-header {
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-color);
+    color: var(--navbar-text);
     margin-bottom: 0.75rem;
     display: flex;
     align-items: center;

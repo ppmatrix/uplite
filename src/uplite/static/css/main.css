@@ -56,7 +56,7 @@ body {
 .card {
     border: none;
     background-color: var(--bg-secondary);
-    color: var(--navbar-text);
+    color: var(--text-color);
     box-shadow: 0 0.125rem 0.25rem var(--shadow);
     transition: box-shadow 0.15s ease-in-out, background-color 0.3s ease, color 0.3s ease;
 }
@@ -67,7 +67,7 @@ body {
 
 .widget {
     background: var(--bg-secondary);
-    color: var(--navbar-text);
+    color: var(--text-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow);
     margin-bottom: 1.5rem;
@@ -281,7 +281,7 @@ body {
     background: var(--widget-header-bg);
     border-bottom: 1px solid var(--border-color);
     font-weight: 600;
-    color: var(--navbar-text);
+    color: var(--text-color);
     transition: background 0.3s ease, color 0.3s ease;
 }
 

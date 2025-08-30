@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}{{ connection.name }} Statistics - UpLite{% endblock %}
+{% block title %}{{ connection.name }} Statistics - UpLite
+
+{% endblock %}
 
 {% block head %}
 <!-- Chart.js for beautiful charts -->
@@ -75,6 +77,7 @@
 
 .daily-stats-table {
     font-size: 0.9rem;
+    color: var(--text-color);
 }
 
 .daily-stats-table th {
@@ -82,12 +85,90 @@
     border: none;
     padding: 0.75rem;
     font-weight: 600;
+    color: var(--text-color);
 }
 
 .daily-stats-table td {
     border: none;
     padding: 0.75rem;
     border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+/* Dark theme enhancements - ULTRA AGGRESSIVE OVERRIDE */
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table,
+[data-bs-theme="dark"] .table.daily-stats-table,
+[data-bs-theme="dark"] table.daily-stats-table {
+    --bs-table-bg: #1a1a1a !important;
+    --bs-table-accent-bg: #2a2a2a !important;
+    --bs-table-striped-bg: #2a2a2a !important;
+    --bs-table-active-bg: #333333 !important;
+    --bs-table-hover-bg: #333333 !important;
+    --bs-table-color: #e9ecef !important;
+    background-color: #1a1a1a !important;
+    background: #1a1a1a !important;
+    color: #e9ecef !important;
+}
+
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table thead th,
+[data-bs-theme="dark"] .table.daily-stats-table thead th,
+[data-bs-theme="dark"] table.daily-stats-table thead th {
+    background-color: #0d1117 !important;
+    background: #0d1117 !important;
+    color: #f0f6fc !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table tbody tr,
+[data-bs-theme="dark"] .table.daily-stats-table tbody tr,
+[data-bs-theme="dark"] table.daily-stats-table tbody tr {
+    background-color: #2a2a2a !important;
+    background: #2a2a2a !important;
+}
+
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table tbody tr td,
+[data-bs-theme="dark"] .table.daily-stats-table tbody tr td,
+[data-bs-theme="dark"] table.daily-stats-table tbody tr td {
+    background-color: #2a2a2a !important;
+    background: #2a2a2a !important;
+    color: #e9ecef !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table tbody tr:hover,
+[data-bs-theme="dark"] .table.daily-stats-table tbody tr:hover,
+[data-bs-theme="dark"] table.daily-stats-table tbody tr:hover {
+    background-color: #333333 !important;
+    background: #333333 !important;
+}
+
+[data-bs-theme="dark"] .table-responsive .table.daily-stats-table tbody tr:hover td,
+[data-bs-theme="dark"] .table.daily-stats-table tbody tr:hover td,
+[data-bs-theme="dark"] table.daily-stats-table tbody tr:hover td {
+    background-color: #333333 !important;
+    background: #333333 !important;
+    color: #f0f6fc !important;
+}
+
+/* Additional nuclear option - target any table cell in dark mode daily stats */
+[data-bs-theme="dark"] .daily-stats-table td,
+[data-bs-theme="dark"] .daily-stats-table th {
+    background-color: #2a2a2a !important;
+    background: #2a2a2a !important;
+    color: #e9ecef !important;
+}
+
+[data-bs-theme="dark"] .daily-stats-table th {
+    background-color: #0d1117 !important;
+    background: #0d1117 !important;
+    color: #f0f6fc !important;
+}
+
+[data-bs-theme="dark"] .table.daily-stats-table tbody tr:hover td {
+    background-color: rgba(0, 0, 0, 0.35) !important;
+    background: rgba(0, 0, 0, 0.35) !important;
 }
 
 .chart-container {
@@ -153,6 +234,44 @@
     color: var(--text-color);
 }
 </style>
+
+<script>
+// Force CSS reload for dark mode table fix
+document.addEventListener('DOMContentLoaded', function() {
+    const darkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    if (darkMode) {
+        const table = document.querySelector('.daily-stats-table');
+        if (table) {
+            table.style.cssText += 'background-color: #2a2a2a !important;';
+            const cells = table.querySelectorAll('td, th');
+            cells.forEach(cell => {
+                if (cell.tagName === 'TH') {
+                    cell.style.cssText += 'background-color: #2d2d2d !important; color: #ffffff !important;';
+                } else {
+                    cell.style.cssText += 'background-color: #2a2a2a !important; color: #e0e0e0 !important;';
+                }
+            });
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.cssText += 'background-color: #2a2a2a !important;';
+                row.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: #353535 !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #353535 !important;';
+                    });
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: #2a2a2a !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #2a2a2a !important;';
+                    });
+                });
+            });
+        }
+    }
+});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -530,6 +649,44 @@
         {% endif %}
     </div>    </div>
 </div>
+
+<script>
+// Force CSS reload for dark mode table fix
+document.addEventListener('DOMContentLoaded', function() {
+    const darkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    if (darkMode) {
+        const table = document.querySelector('.daily-stats-table');
+        if (table) {
+            table.style.cssText += 'background-color: #2a2a2a !important;';
+            const cells = table.querySelectorAll('td, th');
+            cells.forEach(cell => {
+                if (cell.tagName === 'TH') {
+                    cell.style.cssText += 'background-color: #2d2d2d !important; color: #ffffff !important;';
+                } else {
+                    cell.style.cssText += 'background-color: #2a2a2a !important; color: #e0e0e0 !important;';
+                }
+            });
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.cssText += 'background-color: #2a2a2a !important;';
+                row.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: #353535 !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #353535 !important;';
+                    });
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: #2a2a2a !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #2a2a2a !important;';
+                    });
+                });
+            });
+        }
+    }
+});
+</script>
 {% endblock %}
 
 {% block scripts %}
@@ -901,4 +1058,134 @@ document.addEventListener('DOMContentLoaded', function() {
     setInterval(refreshWithTabPreservation, 60000);
 });
 </script>
+
+<script>
+// Force CSS reload for dark mode table fix
+document.addEventListener('DOMContentLoaded', function() {
+    const darkMode = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    if (darkMode) {
+        const table = document.querySelector('.daily-stats-table');
+        if (table) {
+            table.style.cssText += 'background-color: #2a2a2a !important;';
+            const cells = table.querySelectorAll('td, th');
+            cells.forEach(cell => {
+                if (cell.tagName === 'TH') {
+                    cell.style.cssText += 'background-color: #2d2d2d !important; color: #ffffff !important;';
+                } else {
+                    cell.style.cssText += 'background-color: #2a2a2a !important; color: #e0e0e0 !important;';
+                }
+            });
+            
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                row.style.cssText += 'background-color: #2a2a2a !important;';
+                row.addEventListener('mouseenter', function() {
+                    this.style.cssText += 'background-color: #353535 !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #353535 !important;';
+                    });
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.cssText += 'background-color: #2a2a2a !important;';
+                    this.querySelectorAll('td').forEach(td => {
+                        td.style.cssText += 'background-color: #2a2a2a !important;';
+                    });
+                });
+            });
+        }
+    }
+});
+</script>
+
+<script>
+function applyTableTheme() {
+    const table = document.querySelector('.daily-stats-table');
+    if (!table) return;
+    
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    
+    if (currentTheme === 'dark') {
+        // Apply dark styles
+        table.style.setProperty('background-color', '#2a2a2a', 'important');
+        
+        // Headers
+        const headers = table.querySelectorAll('th');
+        headers.forEach(th => {
+            th.style.setProperty('background-color', '#2d2d2d', 'important');
+            th.style.setProperty('color', '#ffffff', 'important');
+            th.style.setProperty('border-bottom-color', '#404040', 'important');
+        });
+        
+        // Cells
+        const cells = table.querySelectorAll('td');
+        cells.forEach(td => {
+            td.style.setProperty('background-color', '#2a2a2a', 'important');
+            td.style.setProperty('color', '#e0e0e0', 'important');
+            td.style.setProperty('border-bottom-color', '#404040', 'important');
+        });
+        
+        // Rows with hover effects
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            row.style.setProperty('background-color', '#2a2a2a', 'important');
+            
+            row.addEventListener('mouseenter', function() {
+                this.style.setProperty('background-color', '#353535', 'important');
+                this.querySelectorAll('td').forEach(td => {
+                    td.style.setProperty('background-color', '#353535', 'important');
+                });
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.setProperty('background-color', '#2a2a2a', 'important');
+                this.querySelectorAll('td').forEach(td => {
+                    td.style.setProperty('background-color', '#2a2a2a', 'important');
+                });
+            });
+        });
+        
+    } else {
+        // Clear dark mode styles for light mode
+        table.style.removeProperty('background-color');
+        
+        const allElements = table.querySelectorAll('th, td, tr');
+        allElements.forEach(element => {
+            element.style.removeProperty('background-color');
+            element.style.removeProperty('color');
+            element.style.removeProperty('border-bottom-color');
+        });
+        
+        // Remove hover event listeners
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const newRow = row.cloneNode(true);
+            row.parentNode.replaceChild(newRow, row);
+        });
+    }
+}
+
+// Apply theme on page load
+setTimeout(applyTableTheme, 100);
+
+// Listen for theme changes
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            setTimeout(applyTableTheme, 50);
+        }
+    });
+});
+
+observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+});
+</script>
+
+
+
+
+
+
+
 {% endblock %}

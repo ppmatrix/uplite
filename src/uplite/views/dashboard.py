@@ -1,11 +1,12 @@
 """Dashboard views for UpLite."""
 
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, abort
 from flask_login import login_required, current_user
 
 from ..app import db
 from ..models.connection import Connection
 from ..models.widget_config import WidgetConfig
+from ..models.connection_history import ConnectionHistory
 from ..widgets.widget_manager import WidgetManager
 
 bp = Blueprint('dashboard', __name__)
@@ -44,6 +45,61 @@ def connections():
     return render_template('dashboard/connections.html', connections=connections)
 
 
+@bp.route('/connections/<int:connection_id>/statistics')
+@login_required
+def connection_statistics(connection_id):
+    """Statistics page for a specific connection."""
+    connection = Connection.query.get_or_404(connection_id)
+    
+    # Get statistics for different periods
+    stats_7d = ConnectionHistory.get_connection_statistics(connection_id, days=7)
+    stats_24h = ConnectionHistory.get_connection_statistics(connection_id, days=1)
+    # Get 1-hour statistics (use 1 day but only show last hour data)
+    from datetime import datetime, timedelta
+    cutoff_time = datetime.utcnow() - timedelta(hours=1)
+    entries_1h = ConnectionHistory.query.filter(
+        ConnectionHistory.connection_id == connection_id,
+        ConnectionHistory.timestamp >= cutoff_time
+    ).order_by(ConnectionHistory.timestamp.asc()).all()
+    
+    # Calculate 1-hour stats manually
+    if entries_1h:
+        total_checks = len(entries_1h)
+        up_checks = sum(1 for e in entries_1h if e.status == 'up')
+        uptime_percentage = (up_checks / total_checks * 100) if total_checks > 0 else 0
+        
+        valid_response_times = [e.response_time for e in entries_1h if e.response_time is not None and e.status == 'up']
+        avg_response_time = sum(valid_response_times) / len(valid_response_times) if valid_response_times else None
+        
+        incidents_1h = ConnectionHistory._calculate_incidents(entries_1h)
+        
+        stats_1h = {
+            'total_checks': total_checks,
+            'uptime_percentage': round(uptime_percentage, 2),
+            'avg_response_time': round(avg_response_time, 2) if avg_response_time else None,
+            'incidents': incidents_1h,
+            'period_start': cutoff_time,
+            'period_end': datetime.utcnow()
+        }
+    else:
+        stats_1h = {
+            'total_checks': 0,
+            'uptime_percentage': 0,
+            'avg_response_time': None,
+            'incidents': [],
+            'period_start': cutoff_time,
+            'period_end': datetime.utcnow()
+        }
+    
+    return render_template(
+        'dashboard/connection_stats.html',
+        connection=connection,
+        stats_7d=stats_7d,
+        stats_24h=stats_24h,
+        stats_1h=stats_1h,
+    )
+
+
 @bp.route('/widgets')
 @login_required
 def widgets():
@@ -64,6 +120,95 @@ def settings():
     """User settings page."""
     return render_template('dashboard/settings.html')
 
+
+
+
+@bp.route('/connections/<int:connection_id>/debug')
+@login_required
+def connection_debug(connection_id):
+    """Debug endpoint to see connection data status."""
+    connection = Connection.query.get_or_404(connection_id)
+    debug_info = ConnectionHistory.get_debug_info(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'debug_info': debug_info
+    })
+
+@bp.route('/connections/<int:connection_id>/create-sample-data')
+@login_required  
+def create_sample_data(connection_id):
+    """Create sample data for testing purposes."""
+    connection = Connection.query.get_or_404(connection_id)
+    result = ConnectionHistory.create_sample_data(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'result': result
+    })
+
+@bp.route('/connections/<int:connection_id>/debug-incidents')
+@login_required  
+def debug_incidents(connection_id):
+    """Debug incident calculation in detail."""
+    connection = Connection.query.get_or_404(connection_id)
+    
+    # Get recent entries for debugging
+    from datetime import datetime, timedelta
+    cutoff_time = datetime.utcnow() - timedelta(days=7)
+    entries = ConnectionHistory.query.filter_by(connection_id=connection_id)\
+                                   .filter(ConnectionHistory.timestamp >= cutoff_time)\
+                                   .order_by(ConnectionHistory.timestamp.asc())\
+                                   .limit(200).all()
+    
+    # Show raw entries
+    raw_data = []
+    for entry in entries:  # Show chronologically (query is already asc)
+        raw_data.append({
+            'timestamp': entry.timestamp.strftime('%m/%d %H:%M:%S'),
+            'status': entry.status,
+            'error': entry.error_message or 'None'
+        })
+    
+    # Calculate incidents with our new method
+    incidents = ConnectionHistory._calculate_incidents(entries)
+    
+    # Show calculated incidents
+    incident_data = []
+    for i, incident in enumerate(incidents, 1):
+        incident_data.append({
+            'number': i,
+            'status_types': incident['status_types'],
+            'status_desc': incident['status_desc'],
+            'duration_min': incident['duration_minutes'],
+            'start': incident['start_time_formatted'],
+            'end': incident.get('end_time_formatted', 'Ongoing'),
+            'ongoing': incident.get('ongoing', False)
+        })
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'total_entries': len(raw_data),
+        'total_incidents': len(incidents),
+        'raw_entries': raw_data,
+        'calculated_incidents': incident_data
+    })
+
+
+@login_required  
+def create_sample_data(connection_id):
+    """Create sample data for testing purposes."""
+    connection = Connection.query.get_or_404(connection_id)
+    result = ConnectionHistory.create_sample_data(connection_id, days=7)
+    
+    from flask import jsonify
+    return jsonify({
+        'connection_name': connection.name,
+        'result': result
+    })
 
 def _create_default_widgets(user_id):
     """Create default widgets for a new user."""
